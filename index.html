@@ -42,7 +42,7 @@
       width:min(1420px, 100%);
       margin:0 auto;
       display:grid;
-      grid-template-columns: 400px 1fr;
+      grid-template-columns: 420px 1fr;
       gap:16px;
       align-items:start;
     }
@@ -229,6 +229,7 @@
     .badge.blue{ border-color: rgba(74,166,255,0.35); color:#d8efff; }
     .badge.green{ border-color: rgba(63,191,127,0.35); color:#d9fff0; }
     .badge.red{ border-color: rgba(204,59,59,0.35); color:#ffd6d6; }
+    .badge.gold{ border-color: rgba(209,161,75,0.40); color:#f2e6cf; }
 
     .log{
       border:1px solid rgba(255,255,255,0.12);
@@ -248,6 +249,54 @@
       font-size:12px;
       line-height:1.5;
     }
+
+    /* Star control list */
+    .starList{ display:grid; gap:8px; }
+    .starRow{
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.22);
+      border-radius: 14px;
+      padding:10px 10px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .starIcon{
+      width:28px;
+      height:28px;
+      border-radius: 10px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(209,161,75,0.40);
+      background: rgba(209,161,75,0.10);
+      color: rgba(209,161,75,0.95);
+      flex:0 0 auto;
+      font-weight:900;
+    }
+    .starMeta{ flex:1 1 auto; min-width:0; }
+    .starTitle{
+      font-weight:900;
+      font-size:13px;
+      line-height:1.2;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .starSub{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+    }
+    .starTiny{
+      margin-top:6px;
+      color: var(--dim);
+      font-size:11px;
+      letter-spacing:0.02em;
+    }
+
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
 
     /* Map */
     .mapWrap{
@@ -322,7 +371,7 @@
       color: var(--ink);
       font-size:12px;
       line-height:1.4;
-      max-width: 560px;
+      max-width: 620px;
       opacity:0;
       transform: translateY(6px);
       transition: opacity .18s ease, transform .18s ease;
@@ -334,8 +383,6 @@
       opacity:1;
       transform: translateY(0);
     }
-
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
   </style>
 </head>
 <body>
@@ -383,11 +430,11 @@
           </div>
 
           <div class="hint" style="margin-top:10px;">
-            <div><strong>Move UX upgrade:</strong> after you roll, all reachable hexes are highlighted. Hover a hex to preview distance + path.</div>
+            <div><strong>Movement:</strong> after you roll, reachable hexes are highlighted. Hover a hex to preview distance + path.</div>
             <div style="margin-top:6px;"><strong>Team benefits:</strong></div>
             <div>• <span class="mono">Imperium</span>: +1 move</div>
-            <div>• <span class="mono">Xenos</span>: minimum roll is 2 (a d3 result of 1 becomes 2)</div>
-            <div>• <span class="mono">Chaos</span>: +1 effective move if your destination is closer to the nearest enemy than your starting hex</div>
+            <div>• <span class="mono">Xenos</span>: minimum roll is 2</div>
+            <div>• <span class="mono">Chaos</span>: +1 effective move if destination is closer to nearest enemy than your start</div>
           </div>
 
           <div class="kv" style="margin-top:10px;">
@@ -411,6 +458,14 @@
               <div class="v" id="selReachCount">—</div>
             </div>
           </div>
+        </div>
+
+        <div class="section">
+          <h2>Star Sites Control</h2>
+          <div class="hint" style="margin-bottom:8px;">
+            A ★ site is controlled by the team with a token <span class="mono">on the hex</span>. If multiple teams share the hex, it becomes <span class="mono">Contested</span>.
+          </div>
+          <div class="starList" id="starList"></div>
         </div>
 
         <div class="section">
@@ -451,8 +506,8 @@
 
       <div class="legend">
         <span><span class="dot i"></span>Imperium</span>
-        <span><span class="dot.x" style="background: rgba(63,191,127,0.25); border-color: rgba(63,191,127,0.45);"></span>Xenos</span>
-        <span><span class="dot c"></span>Chaos</span>
+        <span><span class="dot.x"></span>Xenos</span>
+        <span><span class="dot.c"></span>Chaos</span>
         <span>• Highlighted hexes = reachable this move</span>
         <span>• ★ important site • <span class="mono">JAM</span> blocks LOS • <span class="mono">X</span> blocks movement</span>
       </div>
@@ -489,6 +544,17 @@ const HEX_SIZE = 34;
 const GRID_RADIUS = 7;
 const CENTER = { x: 600, y: 430 };
 
+/* Terrain readability: subtle chip colors */
+const BIOME_CHIP = {
+  plains:   { dot:"rgba(255,255,255,0.55)", text:"rgba(255,255,255,0.80)" },
+  forest:   { dot:"rgba(63,191,127,0.72)",  text:"rgba(63,191,127,0.94)"  },
+  water:    { dot:"rgba(74,166,255,0.72)",  text:"rgba(74,166,255,0.94)"  },
+  ruins:    { dot:"rgba(209,161,75,0.72)",  text:"rgba(209,161,75,0.94)"  },
+  hive:     { dot:"rgba(255,255,255,0.70)", text:"rgba(255,255,255,0.92)" },
+  ash:      { dot:"rgba(204,59,59,0.70)",   text:"rgba(204,59,59,0.92)"   },
+  badlands: { dot:"rgba(209,161,75,0.62)",  text:"rgba(209,161,75,0.88)"  }
+};
+
 const BIOMES = [
   { id:"plains",   label:"PLAINS",  abbr:"PL" },
   { id:"forest",   label:"FOREST",  abbr:"FO" },
@@ -515,6 +581,38 @@ const IMPORTANT_TYPES = [
   { id:"data_vault",    label:"Data Vault",     weight: 12 }
 ];
 
+/* Why ★ matters (value + hook) */
+const IMPORTANT_VALUE = {
+  spaceport: [
+    { tag:"PORT", value:"Rapid deployment corridor", hook:"A functioning landing field changes the entire front." },
+    { tag:"PORT", value:"Air-superiority staging", hook:"Whoever owns the pads owns the skies." }
+  ],
+  manufactorum: [
+    { tag:"MFG", value:"War material & repairs", hook:"Ammo, armor plates, and spare parts—real power." },
+    { tag:"MFG", value:"Vehicle salvage lines", hook:"Wrecks become reinforcements if you can hold the yard." }
+  ],
+  relic_site: [
+    { tag:"RELIC", value:"Archaeotech / sacred asset", hook:"Faith, fear, and firepower all point here." },
+    { tag:"RELIC", value:"Unknown weapon signature", hook:"The readings are impossible. That makes it priceless." }
+  ],
+  vox_relay: [
+    { tag:"VOX", value:"Command & intel advantage", hook:"Orders arrive clean; the enemy’s arrive late." },
+    { tag:"VOX", value:"Signal dominance", hook:"Control the relay, control the narrative." }
+  ],
+  shrine: [
+    { tag:"SHR", value:"Morale & martyrdom site", hook:"Armies break—or become legends—around places like this." },
+    { tag:"SHR", value:"Pilgrimage control point", hook:"This site draws people… and conflict follows." }
+  ],
+  promethium: [
+    { tag:"FUEL", value:"Fuel & combustion supply", hook:"Promethium keeps guns firing and transports moving." },
+    { tag:"FUEL", value:"Strategic resource node", hook:"Hold it, and everyone else starts bargaining." }
+  ],
+  data_vault: [
+    { tag:"DATA", value:"Targeting data / hidden records", hook:"Truth is ammunition when the war is political." },
+    { tag:"DATA", value:"Secure archives", hook:"Some secrets are worth more than a planet." }
+  ]
+};
+
 /* ===========================
    STATE
 =========================== */
@@ -531,10 +629,13 @@ let seenStrategicPairs = new Set();
 
 // Movement UX state
 let reachable = new Map();      // key -> distance
-let reachableOrder = [];        // sorted keys
+let reachableOrder = [];
 let hoverKey = null;
-let hoverPath = [];             // [{q,r},...]
+let hoverPath = [];
 let hoverDistance = null;
+
+/* Star control state: key -> {owner: team|null|"Contested"} */
+let starControl = new Map();
 
 /* ===========================
    DOM + HELPERS
@@ -554,7 +655,7 @@ function toast(msg){
   el.textContent = msg;
   el.classList.add("show");
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => el.classList.remove("show"), 2200);
+  toast._t = setTimeout(() => el.classList.remove("show"), 2400);
 }
 
 function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
@@ -567,7 +668,7 @@ function weightedPick(items){
   }
   return items[items.length-1];
 }
-const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 /* ===========================
    HEX MATH
@@ -633,7 +734,7 @@ function hasLOS(aq,ar,bq,br){
 }
 
 /* ===========================
-   TERRAIN
+   TERRAIN + ★ DATA
 =========================== */
 function generateHexes(){
   hexes = new Map();
@@ -648,6 +749,7 @@ function generateHexes(){
     }
   }
 
+  // Place important sites
   const keys = [...hexes.keys()];
   const count = randInt(10,12);
   for(let i=0;i<count;i++){
@@ -657,8 +759,20 @@ function generateHexes(){
     if(h.important) { i--; continue; }
 
     const it = weightedPick(IMPORTANT_TYPES);
-    h.important = { type: it.id, label: it.label, importance: randInt(2,5) };
+    const v = pick(IMPORTANT_VALUE[it.id] || [{ tag:"SITE", value:"Strategic leverage", hook:"A site worth bleeding for." }]);
+
+    h.important = {
+      type: it.id,
+      label: it.label,
+      tag: v.tag,
+      value: v.value,
+      hook: v.hook,
+      importance: randInt(2,5)
+    };
   }
+
+  // Reset star control (recomputed on render)
+  starControl = new Map();
 }
 
 /* ===========================
@@ -668,6 +782,12 @@ function teamColor(team){
   if(team===TEAM.IMPERIUM) return { stroke:"rgba(74,166,255,0.62)", fill:"rgba(74,166,255,0.22)", badge:"blue" };
   if(team===TEAM.XENOS)    return { stroke:"rgba(63,191,127,0.62)", fill:"rgba(63,191,127,0.22)", badge:"green" };
   return { stroke:"rgba(204,59,59,0.62)", fill:"rgba(204,59,59,0.22)", badge:"red" };
+}
+function teamBadge(team){
+  if(team===TEAM.IMPERIUM) return { cls:"blue", label:"Imperium" };
+  if(team===TEAM.XENOS) return { cls:"green", label:"Xenos" };
+  if(team===TEAM.CHAOS) return { cls:"red", label:"Chaos" };
+  return { cls:"", label:"Unheld" };
 }
 
 function placeTokens(){
@@ -715,7 +835,6 @@ function placeTokens(){
       for(let tries=0; tries<10; tries++){
         const h = hexes.get(keyOf(q,r));
         if(h && !h.special.blocks_movement) break;
-        // nudge inward
         if(team===TEAM.IMPERIUM){ q++; r--; }
         if(team===TEAM.XENOS){ q--; }
         if(team===TEAM.CHAOS){ r++; }
@@ -758,7 +877,7 @@ function rollMoveFor(token){
 
   if(token.team === TEAM.IMPERIUM) move = roll + 1;
   else if(token.team === TEAM.XENOS) move = Math.max(2, roll);
-  else move = roll; // Chaos +1 handled at destination check
+  else move = roll;
 
   token.movePoints = move;
   token.moveFrom = keyOf(token.q, token.r);
@@ -783,11 +902,10 @@ function chaosEffectiveMove(token, destKey){
   return eff;
 }
 
-/* BFS from selected token to all reachable hexes, tracking distance + parent for path reconstruction */
 function bfsReachable(startKey, maxDist){
   const start = parseKey(startKey);
   const dist = new Map();
-  const parent = new Map(); // key -> prevKey
+  const parent = new Map();
   const q = [{ q:start.q, r:start.r }];
 
   dist.set(startKey, 0);
@@ -824,10 +942,6 @@ function computeReachableForSelected(){
     return;
   }
 
-  // Chaos benefit depends on destination, but we can still highlight with base,
-  // and then allow "extra" reachable if the +1 condition applies.
-  // To keep it intuitive: highlight base reachable, plus a secondary ring for chaos-bonus.
-  // Implementation: compute base reachable; if chaos, also compute reachable at move+1 and mark those as bonus.
   const startKey = keyOf(tok.q, tok.r);
 
   reachable = new Map();
@@ -838,19 +952,17 @@ function computeReachableForSelected(){
   const baseRes = bfsReachable(startKey, base);
   for(const [k,d] of baseRes.dist.entries()) reachable.set(k, d);
 
-  // store parent maps for path preview
   tok._parentBase = baseRes.parent;
 
   if(tok.team === TEAM.CHAOS){
     const bonusRes = bfsReachable(startKey, base + 1);
     tok._parentBonus = bonusRes.parent;
 
-    // mark bonus-only cells with negative distance encoding? We'll keep a separate set.
     tok._bonusOnly = new Set();
     for(const [k,d] of bonusRes.dist.entries()){
       if(!reachable.has(k)){
         tok._bonusOnly.add(k);
-        reachable.set(k, d); // store true distance (base+1)
+        reachable.set(k, d);
       }
     }
   }else{
@@ -883,13 +995,106 @@ function reconstructPath(parentMap, startKey, endKey){
     cur = parentMap.get(cur);
   }
   path.reverse();
-  // ensure starts at startKey
   if(path.length && keyOf(path[0].q,path[0].r) !== startKey) return [];
   return path;
 }
 
 /* ===========================
-   RUMORS (unchanged rules)
+   STAR CONTROL
+=========================== */
+/* Rule: controlled by team with token on the site hex. If multiple teams occupy, Contested. */
+function computeStarControl(){
+  starControl = new Map();
+  for(const [k,h] of hexes.entries()){
+    if(!h.important) continue;
+
+    const occupants = tokens.filter(t => keyOf(t.q,t.r) === k);
+    const teamsHere = [...new Set(occupants.map(o => o.team))];
+
+    let owner = null;
+    if(teamsHere.length === 1) owner = teamsHere[0];
+    else if(teamsHere.length > 1) owner = "Contested";
+    else owner = null;
+
+    starControl.set(k, { owner, occupants });
+  }
+}
+
+function renderStarControl(){
+  computeStarControl();
+  const list = $("starList");
+  list.innerHTML = "";
+
+  const stars = [...hexes.entries()]
+    .filter(([k,h]) => h.important)
+    .map(([k,h]) => ({ key:k, hex:h, ctl: starControl.get(k) }))
+    .sort((a,b) => {
+      const ai = a.hex.important.importance || 0;
+      const bi = b.hex.important.importance || 0;
+      return bi - ai;
+    });
+
+  if(stars.length === 0){
+    const empty = document.createElement("div");
+    empty.className = "hint";
+    empty.textContent = "No star sites generated yet.";
+    list.appendChild(empty);
+    return;
+  }
+
+  for(const s of stars){
+    const row = document.createElement("div");
+    row.className = "starRow";
+
+    const icon = document.createElement("div");
+    icon.className = "starIcon";
+    icon.textContent = "★";
+
+    const meta = document.createElement("div");
+    meta.className = "starMeta";
+
+    const title = document.createElement("div");
+    title.className = "starTitle";
+    title.textContent = `${s.hex.important.label} (${s.hex.important.tag})`;
+
+    const badge = document.createElement("span");
+    const owner = s.ctl?.owner ?? null;
+
+    if(owner === "Contested"){
+      badge.className = "badge gold";
+      badge.textContent = "Contested";
+    }else if(owner){
+      const b = teamBadge(owner);
+      badge.className = "badge " + b.cls;
+      badge.textContent = b.label;
+    }else{
+      badge.className = "badge";
+      badge.textContent = "Unheld";
+    }
+
+    title.appendChild(badge);
+
+    const sub = document.createElement("div");
+    sub.className = "starSub";
+    sub.textContent = `${s.hex.important.value} — ${s.hex.important.hook}`;
+
+    const tiny = document.createElement("div");
+    tiny.className = "starTiny mono";
+    const occ = (s.ctl?.occupants || []).map(o => o.short).join(", ");
+    tiny.textContent = `Hex ${s.key} • Importance ${s.hex.important.importance} • Occupants: ${occ || "—"}`;
+
+    meta.appendChild(title);
+    meta.appendChild(sub);
+    meta.appendChild(tiny);
+
+    row.appendChild(icon);
+    row.appendChild(meta);
+    list.appendChild(row);
+  }
+}
+
+/* ===========================
+   RUMORS (same rules, but now uses site value/hook in flavor)
 =========================== */
 const STRATEGIC_TEMPLATES = [
   "Long-range augurs register hostile movement near {place}. No visual confirmation. Indicators suggest {theme}.",
@@ -934,30 +1139,35 @@ function bestContextPlace(a, b){
   if(best){
     const h = best.h;
     const parts = [];
-    if(h.important) parts.push("★ " + h.important.label);
+    if(h.important) parts.push(`★ ${h.important.label} (${h.important.tag})`);
     parts.push(h.biome.label);
     if(h.special?.id === "blackout") parts.push("JAMMED");
     if(h.special?.id === "exclusion") parts.push("EXCLUSION");
-    return { place: parts.join(" — "), biomeId: h.biome.id, key: best.k };
+    return { place: parts.join(" — "), biomeId: h.biome.id, key: best.k, site: h.important || null };
   }
 
   const mq = Math.round((a.q + b.q)/2);
   const mr = Math.round((a.r + b.r)/2);
   const mk = keyOf(mq,mr);
   const mh = hexes.get(mk) || hexes.get(keyOf(a.q,a.r));
-  return { place: mh ? mh.biome.label : "Unknown Sector", biomeId: mh ? mh.biome.id : "plains", key: mh ? mk : keyOf(a.q,a.r) };
+  return { place: mh ? mh.biome.label : "Unknown Sector", biomeId: mh ? mh.biome.id : "plains", key: mh ? mk : keyOf(a.q,a.r), site: mh?.important || null };
 }
 
 function generateStrategicRumor(a, b){
   const ctx = bestContextPlace(a,b);
   const themePool = THEMES_BY_BIOME[ctx.biomeId] || THEMES_BY_BIOME.plains;
   const tpl = pick(STRATEGIC_TEMPLATES);
-  return { text: tpl.replace("{place}", ctx.place).replace("{theme}", pick(themePool)), locationKey: ctx.key };
+
+  const base = tpl.replace("{place}", ctx.place).replace("{theme}", pick(themePool));
+  const extra = ctx.site ? ` Value at stake: ${ctx.site.value}.` : "";
+  return { text: base + extra, locationKey: ctx.key };
 }
 function generateTacticalRumor(a, b){
   const ctx = bestContextPlace(a,b);
   const tpl = pick(TACTICAL_TEMPLATES);
-  return { text: tpl.replace("{place}", ctx.place).replace("{a}", a.faction).replace("{b}", b.faction), locationKey: ctx.key };
+  const base = tpl.replace("{place}", ctx.place).replace("{a}", a.faction).replace("{b}", b.faction);
+  const extra = ctx.site ? ` Objective: ${ctx.site.value}.` : "";
+  return { text: base + extra, locationKey: ctx.key };
 }
 
 function checkRumorsAfterMove(movedToken){
@@ -1053,7 +1263,6 @@ function biomeStyle(h){
 }
 
 function drawReachableOverlay(){
-  // highlight reachable hexes AFTER you roll
   if(!reachable || reachable.size === 0) return;
 
   const tok = getSelectedToken();
@@ -1096,35 +1305,107 @@ function drawHexes(){
 
     svg.appendChild(poly);
 
-    // label
     const c = axialToPixel(h.q,h.r);
+
+    // Subtle terrain chip (top-left)
+    const chipStyle = BIOME_CHIP[h.biome.id] || BIOME_CHIP.plains;
+    const chip = document.createElementNS(svgNS, "g");
+    chip.setAttribute("pointer-events", "none");
+
+    const chipX = c.x - 26;
+    const chipY = c.y - 26;
+
+    const chipBg = document.createElementNS(svgNS, "rect");
+    chipBg.setAttribute("x", chipX);
+    chipBg.setAttribute("y", chipY);
+    chipBg.setAttribute("width", 50);
+    chipBg.setAttribute("height", 16);
+    chipBg.setAttribute("rx", 8);
+    chipBg.setAttribute("fill", "rgba(0,0,0,0.34)");
+    chipBg.setAttribute("stroke", "rgba(255,255,255,0.12)");
+    chipBg.setAttribute("stroke-width", "1");
+    chip.appendChild(chipBg);
+
+    const dot = document.createElementNS(svgNS, "circle");
+    dot.setAttribute("cx", chipX + 9);
+    dot.setAttribute("cy", chipY + 8);
+    dot.setAttribute("r", 3.2);
+    dot.setAttribute("fill", chipStyle.dot);
+    chip.appendChild(dot);
+
+    const chipText = document.createElementNS(svgNS, "text");
+    chipText.setAttribute("x", chipX + 16);
+    chipText.setAttribute("y", chipY + 11.2);
+    chipText.setAttribute("font-size", "9.5");
+    chipText.setAttribute("fill", chipStyle.text);
+    chipText.setAttribute("class", "mono");
+    chipText.textContent = h.biome.abbr;
+    chip.appendChild(chipText);
+
+    svg.appendChild(chip);
+
+    // Coordinate label (smaller + dimmer)
     const label = document.createElementNS(svgNS, "text");
     label.setAttribute("x", c.x);
-    label.setAttribute("y", c.y + 3);
+    label.setAttribute("y", c.y + 18);
     label.setAttribute("text-anchor", "middle");
-    label.setAttribute("font-size", "9.5");
-    label.setAttribute("fill", "rgba(255,255,255,0.70)");
+    label.setAttribute("font-size", "8.5");
+    label.setAttribute("fill", "rgba(255,255,255,0.46)");
     label.setAttribute("class","mono");
     label.setAttribute("pointer-events","none");
-    label.textContent = `${h.biome.abbr} ${h.q},${h.r}`;
+    label.textContent = `${h.q},${h.r}`;
     svg.appendChild(label);
 
+    // ★ Important site
     if(h.important){
       const star = document.createElementNS(svgNS, "text");
       star.setAttribute("x", c.x);
       star.setAttribute("y", c.y - 12);
       star.setAttribute("text-anchor", "middle");
       star.setAttribute("font-size", "12");
-      star.setAttribute("fill", "rgba(209,161,75,0.85)");
+      star.setAttribute("fill", "rgba(209,161,75,0.90)");
       star.setAttribute("pointer-events","none");
       star.textContent = "★";
       svg.appendChild(star);
+
+      // Site tag
+      const tag = document.createElementNS(svgNS, "text");
+      tag.setAttribute("x", c.x);
+      tag.setAttribute("y", c.y - 2);
+      tag.setAttribute("text-anchor", "middle");
+      tag.setAttribute("font-size", "9.5");
+      tag.setAttribute("fill", "rgba(209,161,75,0.85)");
+      tag.setAttribute("class", "mono");
+      tag.setAttribute("pointer-events","none");
+      tag.textContent = h.important.tag;
+      svg.appendChild(tag);
+
+      // Controlled-by ring (subtle)
+      const ctl = starControl.get(k)?.owner ?? null;
+      if(ctl){
+        const ring = document.createElementNS(svgNS, "circle");
+        ring.setAttribute("cx", c.x);
+        ring.setAttribute("cy", c.y);
+        ring.setAttribute("r", "22");
+        if(ctl === "Contested"){
+          ring.setAttribute("stroke", "rgba(209,161,75,0.55)");
+          ring.setAttribute("stroke-dasharray", "4 3");
+        }else{
+          const col = teamColor(ctl);
+          ring.setAttribute("stroke", col.stroke);
+        }
+        ring.setAttribute("fill", "transparent");
+        ring.setAttribute("stroke-width", "2.0");
+        ring.setAttribute("pointer-events","none");
+        svg.appendChild(ring);
+      }
     }
 
+    // Special markers
     if(h.special?.id === "blackout"){
       const t = document.createElementNS(svgNS, "text");
-      t.setAttribute("x", c.x);
-      t.setAttribute("y", c.y + 18);
+      t.setAttribute("x", c.x + 22);
+      t.setAttribute("y", c.y + 12);
       t.setAttribute("text-anchor", "middle");
       t.setAttribute("font-size", "9.5");
       t.setAttribute("fill", "rgba(255,255,255,0.72)");
@@ -1135,8 +1416,8 @@ function drawHexes(){
     }
     if(h.special?.id === "exclusion"){
       const t = document.createElementNS(svgNS, "text");
-      t.setAttribute("x", c.x);
-      t.setAttribute("y", c.y + 18);
+      t.setAttribute("x", c.x + 22);
+      t.setAttribute("y", c.y + 12);
       t.setAttribute("text-anchor", "middle");
       t.setAttribute("font-size", "10.5");
       t.setAttribute("fill", "rgba(255,255,255,0.78)");
@@ -1151,7 +1432,6 @@ function drawHexes(){
 function drawPathPreview(){
   if(!hoverPath || hoverPath.length < 2) return;
 
-  // Draw a polyline through path centers
   const pts = hoverPath.map(h => {
     const c = axialToPixel(h.q, h.r);
     return `${c.x.toFixed(2)},${c.y.toFixed(2)}`;
@@ -1179,7 +1459,6 @@ function drawPathPreview(){
 }
 
 function drawHighlights(){
-  // destination highlight
   if(plannedDestKey){
     const h = hexes.get(plannedDestKey);
     if(h){
@@ -1194,7 +1473,6 @@ function drawHighlights(){
     }
   }
 
-  // selected token outline
   const tok = getSelectedToken();
   if(tok){
     const k = keyOf(tok.q,tok.r);
@@ -1211,7 +1489,6 @@ function drawHighlights(){
     }
   }
 
-  // hovered hex outline (if any)
   if(hoverKey){
     const h = hexes.get(hoverKey);
     if(h){
@@ -1265,10 +1542,11 @@ function drawTokens(){
 }
 
 function renderMap(){
+  computeStarControl(); // ensure starControl is fresh before drawing rings
   clearSVG();
   drawHexes();
-  drawReachableOverlay(); // reachable should sit above terrain but below tokens
-  drawPathPreview();      // path preview above reachable
+  drawReachableOverlay();
+  drawPathPreview();
   drawTokens();
   drawHighlights();
 }
@@ -1316,11 +1594,8 @@ function renderSelected(){
   $("selMove").textContent = tok && tok.movePoints != null ? String(tok.movePoints) : "—";
   $("selDest").textContent = plannedDestKey || "—";
 
-  if(hoverKey && hoverDistance != null){
-    $("selHover").textContent = `${hoverKey} (dist ${hoverDistance})`;
-  }else if(hoverKey){
-    $("selHover").textContent = `${hoverKey}`;
-  }else{
+  // default hover
+  if(!hoverKey){
     $("selHover").textContent = "—";
   }
 
@@ -1335,7 +1610,7 @@ function renderLogs(){
     const a = tokens.find(t=>t.id===r.tokenA);
     const b = tokens.find(t=>t.id===r.tokenB);
     const loc = hexes.get(r.locationKey);
-    const place = loc?.important ? `★ ${loc.important.label}` : (loc?.biome?.label || "Unknown");
+    const place = loc?.important ? `★ ${loc.important.label} (${loc.important.tag})` : (loc?.biome?.label || "Unknown");
     return `• [${r.id}] ${a?.short} ↔ ${b?.short} @ ${place}\n  ${r.text}`;
   }).join("\n\n");
 
@@ -1343,7 +1618,7 @@ function renderLogs(){
     const a = tokens.find(t=>t.id===m.tokenA);
     const b = tokens.find(t=>t.id===m.tokenB);
     const loc = hexes.get(m.locationKey);
-    const place = loc?.important ? `★ ${loc.important.label}` : (loc?.biome?.label || "Unknown");
+    const place = loc?.important ? `★ ${loc.important.label} (${loc.important.tag})` : (loc?.biome?.label || "Unknown");
     return `• [${m.id}] MATCHUP LOCKED @ ${place}\n  ${a?.faction} vs ${b?.faction}\n  ${m.text}`;
   }).join("\n\n");
 
@@ -1352,6 +1627,7 @@ function renderLogs(){
 }
 
 function renderAll(){
+  renderStarControl();
   renderTokenList();
   renderSelected();
   renderLogs();
@@ -1368,7 +1644,6 @@ function selectToken(id){
   hoverPath = [];
   hoverDistance = null;
 
-  // recompute reachable if this token has a move active
   computeReachableForSelected();
   renderAll();
 }
@@ -1376,33 +1651,47 @@ function selectToken(id){
 function onHexHover(hexKey){
   hoverKey = hexKey;
 
-  const tok = getSelectedToken();
-  if(!tok || tok.movePoints == null || !tok.moveFrom){
-    hoverDistance = null;
-    hoverPath = [];
-    renderSelected();
-    // no need to redraw map every mousemove in this state
-    return;
+  const h = hexes.get(hexKey);
+  const parts = [];
+
+  if(h){
+    // terrain / special quick read
+    let terrainLine = h.biome.label;
+    if(h.special?.id === "blackout") terrainLine += " • JAM";
+    if(h.special?.id === "exclusion") terrainLine += " • X";
+    parts.push(terrainLine);
+
+    // star site info
+    if(h.important){
+      parts.push(`★ ${h.important.label} (${h.important.tag})`);
+      parts.push(h.important.value);
+    }
   }
 
-  const startKey = keyOf(tok.q, tok.r);
+  // movement hover preview
+  const tok = getSelectedToken();
+  if(tok && tok.movePoints != null && tok.moveFrom){
+    const startKey = keyOf(tok.q, tok.r);
+    if(reachable.has(hexKey)){
+      hoverDistance = reachable.get(hexKey);
 
-  // If it's reachable, show distance + path
-  if(reachable.has(hexKey)){
-    hoverDistance = reachable.get(hexKey);
+      let parent = tok._parentBase;
+      if(tok.team === TEAM.CHAOS && tok._bonusOnly?.has(hexKey)){
+        parent = tok._parentBonus || tok._parentBase;
+      }
+      hoverPath = reconstructPath(parent, startKey, hexKey);
 
-    // choose parent map for chaos bonus-only cells
-    let parent = tok._parentBase;
-    if(tok.team === TEAM.CHAOS && tok._bonusOnly?.has(hexKey)){
-      parent = tok._parentBonus || tok._parentBase;
+      parts.push(`Dist ${hoverDistance}`);
+    }else{
+      hoverDistance = null;
+      hoverPath = [];
     }
-    hoverPath = reconstructPath(parent, startKey, hexKey);
   }else{
     hoverDistance = null;
     hoverPath = [];
   }
 
-  // Map re-render for path polyline (cheap enough for this size)
+  $("selHover").textContent = parts.join(" | ") || "—";
   renderAll();
 }
 
@@ -1418,13 +1707,11 @@ function onHexClicked(hexKey){
     return;
   }
 
-  // Require clicking a reachable hex (no more trial/error)
   if(!reachable.has(hexKey)){
     toast("Not reachable this move (must be highlighted).");
     return;
   }
 
-  // Chaos +1 is conditional. If they clicked a bonus-only hex, verify condition.
   if(tok.team === TEAM.CHAOS && tok._bonusOnly?.has(hexKey)){
     const eff = chaosEffectiveMove(tok, hexKey);
     const dist = reachable.get(hexKey);
@@ -1438,13 +1725,11 @@ function onHexClicked(hexKey){
   tok.q = dest.q;
   tok.r = dest.r;
 
-  // clear move
   tok.movePoints = null;
   tok.moveFrom = null;
 
   clearMovementUX();
 
-  // rumors
   checkRumorsAfterMove(tok);
   renderAll();
 }
@@ -1530,10 +1815,12 @@ $("btnCenter").addEventListener("click", () => {
 });
 
 $("btnExport").addEventListener("click", async () => {
+  computeStarControl();
   const exportObj = {
     round,
     map: { gridRadius: GRID_RADIUS },
     tokens: tokens.map(t=>({ id:t.id, team:t.team, faction:t.faction, short:t.short, q:t.q, r:t.r, status:t.status })),
+    starControl: [...starControl.entries()].map(([k,v]) => ({ key:k, owner:v.owner, occupants:v.occupants.map(o=>o.short) })),
     strategicRumors,
     tacticalMatchups
   };
@@ -1618,7 +1905,7 @@ function init(){
   generateHexes();
   placeTokens();
   renderAll();
-  toast("Ready. Roll move to highlight reachable hexes; hover to preview path.");
+  toast("Ready. Terrain chips + star-site values enabled. Star control updates automatically.");
 }
 init();
 </script>
