@@ -167,7 +167,7 @@
     }
     .v{
       margin-top:6px;
-      font-weight:800;
+      font-weight:900;
       font-size:13px;
       line-height:1.25;
     }
@@ -322,7 +322,7 @@
       color: var(--ink);
       font-size:12px;
       line-height:1.4;
-      max-width: 520px;
+      max-width: 560px;
       opacity:0;
       transform: translateY(6px);
       transition: opacity .18s ease, transform .18s ease;
@@ -383,7 +383,7 @@
           </div>
 
           <div class="hint" style="margin-top:10px;">
-            <div><strong>Move rule:</strong> Roll d3 + team benefit. Then click a destination hex within that many steps (movement respects blocked hexes).</div>
+            <div><strong>Move UX upgrade:</strong> after you roll, all reachable hexes are highlighted. Hover a hex to preview distance + path.</div>
             <div style="margin-top:6px;"><strong>Team benefits:</strong></div>
             <div>• <span class="mono">Imperium</span>: +1 move</div>
             <div>• <span class="mono">Xenos</span>: minimum roll is 2 (a d3 result of 1 becomes 2)</div>
@@ -396,8 +396,19 @@
               <div class="v" id="selMove">—</div>
             </div>
             <div class="pill">
+              <div class="k">Hover / Path</div>
+              <div class="v mono" id="selHover">—</div>
+            </div>
+          </div>
+
+          <div class="kv" style="margin-top:10px;">
+            <div class="pill">
               <div class="k">Destination</div>
               <div class="v mono" id="selDest">—</div>
+            </div>
+            <div class="pill">
+              <div class="k">Reachable Hexes</div>
+              <div class="v" id="selReachCount">—</div>
             </div>
           </div>
         </div>
@@ -424,7 +435,7 @@
       <div class="mapTop">
         <div class="title">
           <div class="big">Hex Map</div>
-          <div class="small">Mouse wheel: zoom • Click-drag: pan • Click token to select • Roll move, then click destination hex.</div>
+          <div class="small">Mouse wheel: zoom • Click-drag: pan • Click token to select • Roll move, then click a highlighted hex.</div>
         </div>
         <div class="mapTools">
           <button id="btnRegenTerrain" type="button">Randomize Terrain</button>
@@ -440,10 +451,10 @@
 
       <div class="legend">
         <span><span class="dot i"></span>Imperium</span>
-        <span><span class="dot x"></span>Xenos</span>
+        <span><span class="dot.x" style="background: rgba(63,191,127,0.25); border-color: rgba(63,191,127,0.45);"></span>Xenos</span>
         <span><span class="dot c"></span>Chaos</span>
-        <span>• Hex label shows terrain + coords • ★ indicates important site</span>
-        <span>• <span class="mono">JAM</span> blocks LOS • <span class="mono">X</span> blocks movement</span>
+        <span>• Highlighted hexes = reachable this move</span>
+        <span>• ★ important site • <span class="mono">JAM</span> blocks LOS • <span class="mono">X</span> blocks movement</span>
       </div>
     </div>
   </div>
@@ -458,31 +469,26 @@ const TEAM = {
   CHAOS: "Chaos"
 };
 
-// 8 tokens = exactly these 8 armies, assigned to exactly these teams
 const TOKEN_ROSTER = [
-  // Imperium
   { team: TEAM.IMPERIUM, name: "Grey Knights", short: "GK" },
   { team: TEAM.IMPERIUM, name: "Black Templar", short: "BT" },
 
-  // Xenos
   { team: TEAM.XENOS, name: "Tau", short: "TAU" },
   { team: TEAM.XENOS, name: "Tyranids", short: "NID" },
   { team: TEAM.XENOS, name: "Orks", short: "ORK" },
 
-  // Chaos
   { team: TEAM.CHAOS, name: "Death Guard", short: "DG" },
   { team: TEAM.CHAOS, name: "World Eaters", short: "WE" },
   { team: TEAM.CHAOS, name: "Emperor's Children", short: "EC" }
 ];
 
 /* ===========================
-   MAP: HEX GRID + TERRAIN
+   MAP SETTINGS
 =========================== */
-const HEX_SIZE = 34;          // px
-const GRID_RADIUS = 7;        // wider map (more exploration)
+const HEX_SIZE = 34;
+const GRID_RADIUS = 7;
 const CENTER = { x: 600, y: 430 };
 
-// Clear, readable terrain set (with short labels)
 const BIOMES = [
   { id:"plains",   label:"PLAINS",  abbr:"PL" },
   { id:"forest",   label:"FOREST",  abbr:"FO" },
@@ -493,14 +499,12 @@ const BIOMES = [
   { id:"badlands", label:"BADLAND", abbr:"BD" }
 ];
 
-// Operational traits
 const SPECIALS = [
-  { id:"none",      label:"—",             blocks_los:false, blocks_movement:false, weight: 84 },
+  { id:"none",      label:"—",              blocks_los:false, blocks_movement:false, weight: 84 },
   { id:"blackout",  label:"Sensor Blackout",blocks_los:true,  blocks_movement:false, weight: 10 },
   { id:"exclusion", label:"Exclusion Zone", blocks_los:false, blocks_movement:true,  weight: 6  }
 ];
 
-// Important points (for clearer destinations)
 const IMPORTANT_TYPES = [
   { id:"spaceport",     label:"Spaceport",      weight: 18 },
   { id:"manufactorum",  label:"Manufactorum",   weight: 18 },
@@ -511,19 +515,29 @@ const IMPORTANT_TYPES = [
   { id:"data_vault",    label:"Data Vault",     weight: 12 }
 ];
 
-let hexes = new Map();   // key "q,r" -> {q,r, biome, special, important?}
+/* ===========================
+   STATE
+=========================== */
+let hexes = new Map();
 let tokens = [];
 let round = 1;
 
 let selectedTokenId = null;
 let plannedDestKey = null;
 
-let strategicRumors = [];     // {id, tokenA, tokenB, text, locationKey}
-let tacticalMatchups = [];    // {id, tokenA, tokenB, locationKey, text}
+let strategicRumors = [];
+let tacticalMatchups = [];
 let seenStrategicPairs = new Set();
 
+// Movement UX state
+let reachable = new Map();      // key -> distance
+let reachableOrder = [];        // sorted keys
+let hoverKey = null;
+let hoverPath = [];             // [{q,r},...]
+let hoverDistance = null;
+
 /* ===========================
-   UI helpers
+   DOM + HELPERS
 =========================== */
 const $ = (id) => document.getElementById(id);
 const svg = $("svg");
@@ -556,14 +570,13 @@ function weightedPick(items){
 const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
 
 /* ===========================
-   HEX MATH (axial q,r)
+   HEX MATH
 =========================== */
 function axialDistance(aq,ar,bq,br){
   const ax=aq, az=ar, ay=-ax-az;
   const bx=bq, bz=br, by=-bx-bz;
   return Math.max(Math.abs(ax-bx), Math.abs(ay-by), Math.abs(az-bz));
 }
-
 function neighborsOf(q,r){
   const dirs = [
     {dq: 1, dr: 0}, {dq: 1, dr:-1}, {dq: 0, dr:-1},
@@ -571,27 +584,22 @@ function neighborsOf(q,r){
   ];
   return dirs.map(d => ({q:q+d.dq, r:r+d.dr}));
 }
-
 function axialToPixel(q,r){
   const x = HEX_SIZE * (Math.sqrt(3)*q + Math.sqrt(3)/2*r) + CENTER.x;
   const y = HEX_SIZE * (3/2*r) + CENTER.y;
   return {x,y};
 }
-
 function hexCorners(q,r){
   const c = axialToPixel(q,r);
   const pts = [];
   for(let i=0;i<6;i++){
     const ang = (Math.PI/180) * (60*i - 30);
-    pts.push({
-      x: c.x + HEX_SIZE * Math.cos(ang),
-      y: c.y + HEX_SIZE * Math.sin(ang)
-    });
+    pts.push({ x: c.x + HEX_SIZE * Math.cos(ang), y: c.y + HEX_SIZE * Math.sin(ang) });
   }
   return pts;
 }
 
-/* Cube line for LOS */
+/* LOS */
 function axialToCube(q,r){ return {x:q, z:r, y:-q-r}; }
 function cubeToAxial(c){ return {q:c.x, r:c.z}; }
 function cubeLerp(a,b,t){ return { x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t, z:a.z+(b.z-a.z)*t }; }
@@ -619,38 +627,9 @@ function hasLOS(aq,ar,bq,br){
   const line = hexLine(aq,ar,bq,br);
   for(let i=1;i<line.length-1;i++){
     const k = keyOf(line[i].q, line[i].r);
-    const h = hexes.get(k);
-    if(h?.special?.blocks_los) return false;
+    if(hexes.get(k)?.special?.blocks_los) return false;
   }
   return true;
-}
-
-/* ===========================
-   PATHFINDING (movement)
-=========================== */
-function shortestPathLength(fromKey, toKey){
-  if(fromKey===toKey) return 0;
-  const start = parseKey(fromKey);
-
-  const visited = new Set([fromKey]);
-  const queue = [{q:start.q, r:start.r, d:0}];
-
-  while(queue.length){
-    const cur = queue.shift();
-    for(const nb of neighborsOf(cur.q, cur.r)){
-      const nk = keyOf(nb.q, nb.r);
-      if(visited.has(nk)) continue;
-      const h = hexes.get(nk);
-      if(!h) continue;
-      if(h.special?.blocks_movement) continue;
-
-      visited.add(nk);
-      const nd = cur.d + 1;
-      if(nk === toKey) return nd;
-      queue.push({q:nb.q, r:nb.r, d:nd});
-    }
-  }
-  return Infinity;
 }
 
 /* ===========================
@@ -669,7 +648,6 @@ function generateHexes(){
     }
   }
 
-  // sprinkle important sites (10–12, since map is bigger)
   const keys = [...hexes.keys()];
   const count = randInt(10,12);
   for(let i=0;i<count;i++){
@@ -704,25 +682,23 @@ function placeTokens(){
     moveFrom: null
   }));
 
-  // Start regions (3 corners) — evenly spaced: (R,0), (-R,R), (0,-R)
-const starts = {
-  [TEAM.IMPERIUM]: [
-    { q: -GRID_RADIUS,     r:  GRID_RADIUS },
-    { q: -GRID_RADIUS + 1, r:  GRID_RADIUS - 1 }
-  ],
-  [TEAM.XENOS]: [
-    { q:  GRID_RADIUS,     r:  0 },
-    { q:  GRID_RADIUS - 1, r:  0 },
-    { q:  GRID_RADIUS - 1, r:  1 }
-  ],
-  [TEAM.CHAOS]: [
-    { q:  0,               r: -GRID_RADIUS },
-    { q:  1,               r: -GRID_RADIUS + 1 },
-    { q:  0,               r: -GRID_RADIUS + 1 }
-  ]
-};
-
-
+  // Three evenly spaced corners: (R,0), (-R,R), (0,-R)
+  const starts = {
+    [TEAM.IMPERIUM]: [
+      { q: -GRID_RADIUS,     r:  GRID_RADIUS },
+      { q: -GRID_RADIUS + 1, r:  GRID_RADIUS - 1 }
+    ],
+    [TEAM.XENOS]: [
+      { q:  GRID_RADIUS,     r:  0 },
+      { q:  GRID_RADIUS - 1, r:  0 },
+      { q:  GRID_RADIUS - 1, r:  1 }
+    ],
+    [TEAM.CHAOS]: [
+      { q:  0,               r: -GRID_RADIUS },
+      { q:  1,               r: -GRID_RADIUS + 1 },
+      { q:  0,               r: -GRID_RADIUS + 1 }
+    ]
+  };
 
   const byTeam = {
     [TEAM.IMPERIUM]: tokens.filter(t=>t.team===TEAM.IMPERIUM),
@@ -740,19 +716,20 @@ const starts = {
         const h = hexes.get(keyOf(q,r));
         if(h && !h.special.blocks_movement) break;
         // nudge inward
-        if(team===TEAM.IMPERIUM) q++;
-        if(team===TEAM.XENOS) q--;
-        if(team===TEAM.CHAOS) r++;
+        if(team===TEAM.IMPERIUM){ q++; r--; }
+        if(team===TEAM.XENOS){ q--; }
+        if(team===TEAM.CHAOS){ r++; }
       }
       tok.q=q; tok.r=r;
     });
   }
 
   selectedTokenId = tokens[0]?.id || null;
+  clearMovementUX();
 }
 
 /* ===========================
-   MOVEMENT
+   MOVEMENT + REACHABILITY
 =========================== */
 function d3(){ return randInt(1,3); }
 
@@ -775,22 +752,20 @@ function rollMoveFor(token){
     toast("This token is engaged (already matched).");
     return;
   }
+
   const roll = d3();
   let move = roll;
 
-  if(token.team === TEAM.IMPERIUM){
-    move = roll + 1;
-  } else if(token.team === TEAM.XENOS){
-    move = Math.max(2, roll);
-  } else if(token.team === TEAM.CHAOS){
-    move = roll; // +1 conditional at destination check
-  }
+  if(token.team === TEAM.IMPERIUM) move = roll + 1;
+  else if(token.team === TEAM.XENOS) move = Math.max(2, roll);
+  else move = roll; // Chaos +1 handled at destination check
 
   token.movePoints = move;
   token.moveFrom = keyOf(token.q, token.r);
   plannedDestKey = null;
 
-  toast(`Move rolled for ${token.faction}: d3=${roll} → Move=${move}`);
+  computeReachableForSelected();
+  toast(`Move rolled for ${token.faction}: d3=${roll} → Move=${move} (reachable highlighted)`);
 }
 
 function chaosEffectiveMove(token, destKey){
@@ -804,14 +779,117 @@ function chaosEffectiveMove(token, destKey){
   const nearestDest  = nearestEnemyDistance(token.id, dest.q, dest.r);
 
   let eff = token.movePoints;
-  if(Number.isFinite(nearestStart) && Number.isFinite(nearestDest) && nearestDest < nearestStart){
-    eff += 1;
-  }
+  if(Number.isFinite(nearestStart) && Number.isFinite(nearestDest) && nearestDest < nearestStart) eff += 1;
   return eff;
 }
 
+/* BFS from selected token to all reachable hexes, tracking distance + parent for path reconstruction */
+function bfsReachable(startKey, maxDist){
+  const start = parseKey(startKey);
+  const dist = new Map();
+  const parent = new Map(); // key -> prevKey
+  const q = [{ q:start.q, r:start.r }];
+
+  dist.set(startKey, 0);
+  parent.set(startKey, null);
+
+  while(q.length){
+    const cur = q.shift();
+    const curKey = keyOf(cur.q, cur.r);
+    const curD = dist.get(curKey);
+
+    for(const nb of neighborsOf(cur.q, cur.r)){
+      const nk = keyOf(nb.q, nb.r);
+      if(dist.has(nk)) continue;
+
+      const h = hexes.get(nk);
+      if(!h) continue;
+      if(h.special?.blocks_movement) continue;
+
+      const nd = curD + 1;
+      if(nd > maxDist) continue;
+
+      dist.set(nk, nd);
+      parent.set(nk, curKey);
+      q.push({ q:nb.q, r:nb.r });
+    }
+  }
+  return { dist, parent };
+}
+
+function computeReachableForSelected(){
+  const tok = getSelectedToken();
+  if(!tok || tok.movePoints == null || !tok.moveFrom){
+    clearMovementUX();
+    return;
+  }
+
+  // Chaos benefit depends on destination, but we can still highlight with base,
+  // and then allow "extra" reachable if the +1 condition applies.
+  // To keep it intuitive: highlight base reachable, plus a secondary ring for chaos-bonus.
+  // Implementation: compute base reachable; if chaos, also compute reachable at move+1 and mark those as bonus.
+  const startKey = keyOf(tok.q, tok.r);
+
+  reachable = new Map();
+  reachableOrder = [];
+
+  const base = tok.movePoints;
+
+  const baseRes = bfsReachable(startKey, base);
+  for(const [k,d] of baseRes.dist.entries()) reachable.set(k, d);
+
+  // store parent maps for path preview
+  tok._parentBase = baseRes.parent;
+
+  if(tok.team === TEAM.CHAOS){
+    const bonusRes = bfsReachable(startKey, base + 1);
+    tok._parentBonus = bonusRes.parent;
+
+    // mark bonus-only cells with negative distance encoding? We'll keep a separate set.
+    tok._bonusOnly = new Set();
+    for(const [k,d] of bonusRes.dist.entries()){
+      if(!reachable.has(k)){
+        tok._bonusOnly.add(k);
+        reachable.set(k, d); // store true distance (base+1)
+      }
+    }
+  }else{
+    tok._parentBonus = null;
+    tok._bonusOnly = new Set();
+  }
+
+  reachableOrder = [...reachable.entries()].sort((a,b)=>a[1]-b[1]).map(x=>x[0]);
+  $("selReachCount").textContent = `${reachable.size} hexes`;
+  renderAll();
+}
+
+function clearMovementUX(){
+  reachable = new Map();
+  reachableOrder = [];
+  hoverKey = null;
+  hoverPath = [];
+  hoverDistance = null;
+  plannedDestKey = null;
+  $("selReachCount").textContent = "—";
+  $("selHover").textContent = "—";
+}
+
+function reconstructPath(parentMap, startKey, endKey){
+  if(!parentMap || !parentMap.has(endKey)) return [];
+  const path = [];
+  let cur = endKey;
+  while(cur){
+    path.push(parseKey(cur));
+    cur = parentMap.get(cur);
+  }
+  path.reverse();
+  // ensure starts at startKey
+  if(path.length && keyOf(path[0].q,path[0].r) !== startKey) return [];
+  return path;
+}
+
 /* ===========================
-   RUMORS (2 layers)
+   RUMORS (unchanged rules)
 =========================== */
 const STRATEGIC_TEMPLATES = [
   "Long-range augurs register hostile movement near {place}. No visual confirmation. Indicators suggest {theme}.",
@@ -838,7 +916,6 @@ const THEMES_BY_BIOME = {
 function normalizePair(aId,bId){ return [aId,bId].sort().join("|"); }
 
 function bestContextPlace(a, b){
-  // Prefer nearest important hex within 2 of either token; else use midpoint biome.
   let best=null, bestScore=-1;
 
   for(const [k,h] of hexes.entries()){
@@ -849,7 +926,7 @@ function bestContextPlace(a, b){
 
     let score = 0;
     if(h.important) score += h.important.importance * 10;
-    if(h.special?.blocks_los) score += 6;      // blackout is narratively spicy
+    if(h.special?.blocks_los) score += 6;
     score += (2 - Math.min(da,db)) * 2;
     if(score > bestScore){ bestScore=score; best={k,h}; }
   }
@@ -868,45 +945,32 @@ function bestContextPlace(a, b){
   const mr = Math.round((a.r + b.r)/2);
   const mk = keyOf(mq,mr);
   const mh = hexes.get(mk) || hexes.get(keyOf(a.q,a.r));
-  return {
-    place: mh ? mh.biome.label : "Unknown Sector",
-    biomeId: mh ? mh.biome.id : "plains",
-    key: mh ? mk : keyOf(a.q,a.r)
-  };
+  return { place: mh ? mh.biome.label : "Unknown Sector", biomeId: mh ? mh.biome.id : "plains", key: mh ? mk : keyOf(a.q,a.r) };
 }
 
 function generateStrategicRumor(a, b){
   const ctx = bestContextPlace(a,b);
   const themePool = THEMES_BY_BIOME[ctx.biomeId] || THEMES_BY_BIOME.plains;
   const tpl = pick(STRATEGIC_TEMPLATES);
-  return {
-    text: tpl.replace("{place}", ctx.place).replace("{theme}", pick(themePool)),
-    locationKey: ctx.key
-  };
+  return { text: tpl.replace("{place}", ctx.place).replace("{theme}", pick(themePool)), locationKey: ctx.key };
 }
-
 function generateTacticalRumor(a, b){
   const ctx = bestContextPlace(a,b);
   const tpl = pick(TACTICAL_TEMPLATES);
-  return {
-    text: tpl.replace("{place}", ctx.place).replace("{a}", a.faction).replace("{b}", b.faction),
-    locationKey: ctx.key
-  };
+  return { text: tpl.replace("{place}", ctx.place).replace("{a}", a.faction).replace("{b}", b.faction), locationKey: ctx.key };
 }
 
 function checkRumorsAfterMove(movedToken){
   if(!movedToken || movedToken.status !== "available") return;
 
-  // Tactical first: within 2 + LOS
   const candidatesTac = [];
   for(const other of tokens){
     if(other.id === movedToken.id) continue;
     if(other.status !== "available") continue;
     if(other.team === movedToken.team) continue;
+
     const d = axialDistance(movedToken.q, movedToken.r, other.q, other.r);
-    if(d <= 2 && hasLOS(movedToken.q, movedToken.r, other.q, other.r)){
-      candidatesTac.push({ other, d });
-    }
+    if(d <= 2 && hasLOS(movedToken.q, movedToken.r, other.q, other.r)) candidatesTac.push({ other, d });
   }
   candidatesTac.sort((a,b)=>a.d-b.d);
   if(candidatesTac.length){
@@ -930,7 +994,6 @@ function checkRumorsAfterMove(movedToken){
     return;
   }
 
-  // Strategic: within 4, no LOS
   const candidatesStrat = [];
   for(const other of tokens){
     if(other.id === movedToken.id) continue;
@@ -965,12 +1028,11 @@ function checkRumorsAfterMove(movedToken){
 }
 
 /* ===========================
-   SVG draw
+   DRAW
 =========================== */
 function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
 
 function biomeStyle(h){
-  // stronger stroke + clearer fill differences
   let fill = "rgba(255,255,255,0.05)";
   let stroke = "rgba(255,255,255,0.18)";
 
@@ -984,15 +1046,37 @@ function biomeStyle(h){
     default: break;
   }
 
-  if(h.special?.id === "blackout"){
-    stroke = "rgba(204,59,59,0.42)";
-    fill = "rgba(0,0,0,0.34)";
-  }
-  if(h.special?.id === "exclusion"){
-    stroke = "rgba(204,59,59,0.50)";
-    fill = "rgba(204,59,59,0.09)";
-  }
+  if(h.special?.id === "blackout"){ stroke="rgba(204,59,59,0.42)"; fill="rgba(0,0,0,0.34)"; }
+  if(h.special?.id === "exclusion"){ stroke="rgba(204,59,59,0.50)"; fill="rgba(204,59,59,0.09)"; }
+
   return {fill, stroke};
+}
+
+function drawReachableOverlay(){
+  // highlight reachable hexes AFTER you roll
+  if(!reachable || reachable.size === 0) return;
+
+  const tok = getSelectedToken();
+  const startKey = tok ? keyOf(tok.q,tok.r) : null;
+
+  for(const [k,d] of reachable.entries()){
+    if(k === startKey) continue;
+    const h = hexes.get(k);
+    if(!h) continue;
+
+    const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+
+    const poly = document.createElementNS(svgNS, "polygon");
+    poly.setAttribute("points", pts);
+
+    const isBonus = tok?.team === TEAM.CHAOS && tok?._bonusOnly?.has(k);
+    poly.setAttribute("fill", isBonus ? "rgba(209,161,75,0.10)" : "rgba(74,166,255,0.08)");
+    poly.setAttribute("stroke", isBonus ? "rgba(209,161,75,0.38)" : "rgba(74,166,255,0.34)");
+    poly.setAttribute("stroke-width", "2.0");
+    poly.setAttribute("pointer-events", "none");
+
+    svg.appendChild(poly);
+  }
 }
 
 function drawHexes(){
@@ -1006,13 +1090,13 @@ function drawHexes(){
     poly.setAttribute("stroke", st.stroke);
     poly.setAttribute("stroke-width", "1.6");
     poly.setAttribute("data-hex", k);
-    poly.addEventListener("click", (e) => {
-      e.stopPropagation();
-      onHexClicked(k);
-    });
+
+    poly.addEventListener("click", (e) => { e.stopPropagation(); onHexClicked(k); });
+    poly.addEventListener("mousemove", (e) => { e.stopPropagation(); onHexHover(k); });
+
     svg.appendChild(poly);
 
-    // Hex label: "ABBR q,r" (clear identity)
+    // label
     const c = axialToPixel(h.q,h.r);
     const label = document.createElementNS(svgNS, "text");
     label.setAttribute("x", c.x);
@@ -1025,7 +1109,6 @@ function drawHexes(){
     label.textContent = `${h.biome.abbr} ${h.q},${h.r}`;
     svg.appendChild(label);
 
-    // Important marker
     if(h.important){
       const star = document.createElementNS(svgNS, "text");
       star.setAttribute("x", c.x);
@@ -1038,7 +1121,6 @@ function drawHexes(){
       svg.appendChild(star);
     }
 
-    // Special markers
     if(h.special?.id === "blackout"){
       const t = document.createElementNS(svgNS, "text");
       t.setAttribute("x", c.x);
@@ -1066,6 +1148,36 @@ function drawHexes(){
   }
 }
 
+function drawPathPreview(){
+  if(!hoverPath || hoverPath.length < 2) return;
+
+  // Draw a polyline through path centers
+  const pts = hoverPath.map(h => {
+    const c = axialToPixel(h.q, h.r);
+    return `${c.x.toFixed(2)},${c.y.toFixed(2)}`;
+  }).join(" ");
+
+  const outline = document.createElementNS(svgNS, "polyline");
+  outline.setAttribute("points", pts);
+  outline.setAttribute("fill", "none");
+  outline.setAttribute("stroke", "rgba(0,0,0,0.55)");
+  outline.setAttribute("stroke-width", "6");
+  outline.setAttribute("stroke-linecap", "round");
+  outline.setAttribute("stroke-linejoin", "round");
+  outline.setAttribute("pointer-events", "none");
+  svg.appendChild(outline);
+
+  const line = document.createElementNS(svgNS, "polyline");
+  line.setAttribute("points", pts);
+  line.setAttribute("fill", "none");
+  line.setAttribute("stroke", "rgba(255,255,255,0.75)");
+  line.setAttribute("stroke-width", "2.4");
+  line.setAttribute("stroke-linecap", "round");
+  line.setAttribute("stroke-linejoin", "round");
+  line.setAttribute("pointer-events", "none");
+  svg.appendChild(line);
+}
+
 function drawHighlights(){
   // destination highlight
   if(plannedDestKey){
@@ -1076,13 +1188,13 @@ function drawHighlights(){
       poly.setAttribute("points", pts);
       poly.setAttribute("fill", "rgba(74,166,255,0.10)");
       poly.setAttribute("stroke", "rgba(74,166,255,0.55)");
-      poly.setAttribute("stroke-width", "2.4");
+      poly.setAttribute("stroke-width", "2.6");
       poly.setAttribute("pointer-events", "none");
       svg.appendChild(poly);
     }
   }
 
-  // selected token hex outline
+  // selected token outline
   const tok = getSelectedToken();
   if(tok){
     const k = keyOf(tok.q,tok.r);
@@ -1094,6 +1206,21 @@ function drawHighlights(){
       poly.setAttribute("fill", "transparent");
       poly.setAttribute("stroke", "rgba(255,255,255,0.65)");
       poly.setAttribute("stroke-width", "2.4");
+      poly.setAttribute("pointer-events", "none");
+      svg.appendChild(poly);
+    }
+  }
+
+  // hovered hex outline (if any)
+  if(hoverKey){
+    const h = hexes.get(hoverKey);
+    if(h){
+      const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+      const poly = document.createElementNS(svgNS, "polygon");
+      poly.setAttribute("points", pts);
+      poly.setAttribute("fill", "transparent");
+      poly.setAttribute("stroke", "rgba(209,161,75,0.55)");
+      poly.setAttribute("stroke-width", "2.0");
       poly.setAttribute("pointer-events", "none");
       svg.appendChild(poly);
     }
@@ -1132,11 +1259,7 @@ function drawTokens(){
     t.textContent = tok.short;
     g.appendChild(t);
 
-    g.addEventListener("click", (e) => {
-      e.stopPropagation();
-      selectToken(tok.id);
-    });
-
+    g.addEventListener("click", (e) => { e.stopPropagation(); selectToken(tok.id); });
     svg.appendChild(g);
   }
 }
@@ -1144,16 +1267,16 @@ function drawTokens(){
 function renderMap(){
   clearSVG();
   drawHexes();
+  drawReachableOverlay(); // reachable should sit above terrain but below tokens
+  drawPathPreview();      // path preview above reachable
   drawTokens();
   drawHighlights();
 }
 
 /* ===========================
-   Left UI
+   LEFT UI
 =========================== */
-function getSelectedToken(){
-  return tokens.find(t=>t.id===selectedTokenId) || null;
-}
+function getSelectedToken(){ return tokens.find(t=>t.id===selectedTokenId) || null; }
 
 function renderTokenList(){
   const list = $("tokenList");
@@ -1193,8 +1316,18 @@ function renderSelected(){
   $("selMove").textContent = tok && tok.movePoints != null ? String(tok.movePoints) : "—";
   $("selDest").textContent = plannedDestKey || "—";
 
+  if(hoverKey && hoverDistance != null){
+    $("selHover").textContent = `${hoverKey} (dist ${hoverDistance})`;
+  }else if(hoverKey){
+    $("selHover").textContent = `${hoverKey}`;
+  }else{
+    $("selHover").textContent = "—";
+  }
+
   $("btnRollMove").disabled = !tok || tok.status!=="available";
   $("btnClearMove").disabled = !tok;
+
+  $("selReachCount").textContent = reachable.size ? `${reachable.size} hexes` : "—";
 }
 
 function renderLogs(){
@@ -1226,11 +1359,50 @@ function renderAll(){
 }
 
 /* ===========================
-   Interaction
+   INTERACTION
 =========================== */
 function selectToken(id){
   selectedTokenId = id;
   plannedDestKey = null;
+  hoverKey = null;
+  hoverPath = [];
+  hoverDistance = null;
+
+  // recompute reachable if this token has a move active
+  computeReachableForSelected();
+  renderAll();
+}
+
+function onHexHover(hexKey){
+  hoverKey = hexKey;
+
+  const tok = getSelectedToken();
+  if(!tok || tok.movePoints == null || !tok.moveFrom){
+    hoverDistance = null;
+    hoverPath = [];
+    renderSelected();
+    // no need to redraw map every mousemove in this state
+    return;
+  }
+
+  const startKey = keyOf(tok.q, tok.r);
+
+  // If it's reachable, show distance + path
+  if(reachable.has(hexKey)){
+    hoverDistance = reachable.get(hexKey);
+
+    // choose parent map for chaos bonus-only cells
+    let parent = tok._parentBase;
+    if(tok.team === TEAM.CHAOS && tok._bonusOnly?.has(hexKey)){
+      parent = tok._parentBonus || tok._parentBase;
+    }
+    hoverPath = reconstructPath(parent, startKey, hexKey);
+  }else{
+    hoverDistance = null;
+    hoverPath = [];
+  }
+
+  // Map re-render for path polyline (cheap enough for this size)
   renderAll();
 }
 
@@ -1239,7 +1411,6 @@ function onHexClicked(hexKey){
   if(!tok) return;
 
   plannedDestKey = hexKey;
-  $("selDest").textContent = plannedDestKey;
 
   if(tok.movePoints == null || !tok.moveFrom){
     toast("Destination selected. Roll movement to execute a move.");
@@ -1247,31 +1418,39 @@ function onHexClicked(hexKey){
     return;
   }
 
-  const dist = shortestPathLength(keyOf(tok.q,tok.r), hexKey);
-  if(!Number.isFinite(dist) || dist === Infinity){
-    toast("No valid path (blocked movement).");
+  // Require clicking a reachable hex (no more trial/error)
+  if(!reachable.has(hexKey)){
+    toast("Not reachable this move (must be highlighted).");
     return;
   }
 
-  const effMove = chaosEffectiveMove(tok, hexKey);
-  if(dist > effMove){
-    toast(`Too far: path=${dist} > move=${effMove}`);
-    return;
+  // Chaos +1 is conditional. If they clicked a bonus-only hex, verify condition.
+  if(tok.team === TEAM.CHAOS && tok._bonusOnly?.has(hexKey)){
+    const eff = chaosEffectiveMove(tok, hexKey);
+    const dist = reachable.get(hexKey);
+    if(dist > eff){
+      toast("Chaos bonus not active for that destination (must move closer to nearest enemy).");
+      return;
+    }
   }
 
   const dest = parseKey(hexKey);
   tok.q = dest.q;
   tok.r = dest.r;
 
+  // clear move
   tok.movePoints = null;
   tok.moveFrom = null;
 
+  clearMovementUX();
+
+  // rumors
   checkRumorsAfterMove(tok);
   renderAll();
 }
 
 /* ===========================
-   Buttons
+   BUTTONS
 =========================== */
 $("btnRollMove").addEventListener("click", () => {
   const tok = getSelectedToken();
@@ -1285,7 +1464,7 @@ $("btnClearMove").addEventListener("click", () => {
   if(!tok) return;
   tok.movePoints = null;
   tok.moveFrom = null;
-  plannedDestKey = null;
+  clearMovementUX();
   toast("Move cleared.");
   renderAll();
 });
@@ -1301,7 +1480,7 @@ $("btnNewRound").addEventListener("click", () => {
     t.movePoints = null;
     t.moveFrom = null;
   }
-  plannedDestKey = null;
+  clearMovementUX();
   toast(`New round started: Round ${round}`);
   renderAll();
 });
@@ -1311,9 +1490,9 @@ $("btnResetMap").addEventListener("click", () => {
   strategicRumors = [];
   tacticalMatchups = [];
   seenStrategicPairs = new Set();
+
   generateHexes();
   placeTokens();
-  plannedDestKey = null;
 
   resetView();
   toast("Map and round state reset.");
@@ -1322,7 +1501,8 @@ $("btnResetMap").addEventListener("click", () => {
 
 $("btnRegenTerrain").addEventListener("click", () => {
   generateHexes();
-  // Keep token positions, but if any token is now on a blocked hex, nudge them
+
+  // keep token positions but nudge off blocked
   for(const tok of tokens){
     const k = keyOf(tok.q,tok.r);
     const h = hexes.get(k);
@@ -1338,6 +1518,8 @@ $("btnRegenTerrain").addEventListener("click", () => {
       if(!moved){ tok.q=0; tok.r=0; }
     }
   }
+
+  computeReachableForSelected();
   toast("Terrain randomized (tokens preserved).");
   renderAll();
 });
@@ -1369,13 +1551,8 @@ $("btnExport").addEventListener("click", async () => {
    ZOOM + PAN (SVG viewBox)
 =========================== */
 let vb = { x:0, y:0, w:1200, h:860 };
-function applyViewBox(){
-  svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
-}
-function resetView(){
-  vb = { x:0, y:0, w:1200, h:860 };
-  applyViewBox();
-}
+function applyViewBox(){ svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
+function resetView(){ vb = { x:0, y:0, w:1200, h:860 }; applyViewBox(); }
 resetView();
 
 function svgPointFromClient(clientX, clientY){
@@ -1385,18 +1562,14 @@ function svgPointFromClient(clientX, clientY){
   return { x: vb.x + px*vb.w, y: vb.y + py*vb.h };
 }
 
-let isDragging = false;
-let dragStart = null;
-let vbStart = null;
+let isDragging=false, dragStart=null, vbStart=null;
 
 svg.addEventListener("mousedown", (e) => {
-  // don’t start panning when clicking on a token/hex click handlers already stopPropagation
   isDragging = true;
   svg.classList.add("dragging");
   dragStart = svgPointFromClient(e.clientX, e.clientY);
   vbStart = { ...vb };
 });
-
 window.addEventListener("mousemove", (e) => {
   if(!isDragging) return;
   const cur = svgPointFromClient(e.clientX, e.clientY);
@@ -1406,13 +1579,11 @@ window.addEventListener("mousemove", (e) => {
   vb.y = vbStart.y - dy;
   applyViewBox();
 });
-
 window.addEventListener("mouseup", () => {
   if(!isDragging) return;
   isDragging = false;
   svg.classList.remove("dragging");
 });
-
 svg.addEventListener("wheel", (e) => {
   e.preventDefault();
 
@@ -1422,16 +1593,13 @@ svg.addEventListener("wheel", (e) => {
 
   const mouse = svgPointFromClient(e.clientX, e.clientY);
 
-  // clamp zoom
   const newW = vb.w * factor;
   const newH = vb.h * factor;
 
-  const minW = 420;   // max zoom in
-  const maxW = 2400;  // max zoom out
-
+  const minW = 420;
+  const maxW = 2400;
   if(newW < minW || newW > maxW) return;
 
-  // zoom toward cursor
   const rx = (mouse.x - vb.x) / vb.w;
   const ry = (mouse.y - vb.y) / vb.h;
 
@@ -1450,7 +1618,7 @@ function init(){
   generateHexes();
   placeTokens();
   renderAll();
-  toast("Ready. Zoom/pan the map, then start moving tokens.");
+  toast("Ready. Roll move to highlight reachable hexes; hover to preview path.");
 }
 init();
 </script>
