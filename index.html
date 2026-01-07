@@ -704,18 +704,24 @@ function placeTokens(){
     moveFrom: null
   }));
 
-  // Start regions (3 “corners”)
+   // Start regions (3 “corners”) — spaced far apart
   const starts = {
     [TEAM.IMPERIUM]: [
-      {q:-GRID_RADIUS, r:0}, {q:-GRID_RADIUS+1, r:-1}
+      { q: -GRID_RADIUS,     r:  0 },
+      { q: -GRID_RADIUS + 1, r:  0 }
     ],
     [TEAM.XENOS]: [
-      {q:GRID_RADIUS, r:0}, {q:GRID_RADIUS-1, r:1}, {q:GRID_RADIUS-1, r:0}
+      { q:  GRID_RADIUS,     r:  0 },
+      { q:  GRID_RADIUS - 1, r:  0 },
+      { q:  GRID_RADIUS - 1, r:  1 }
     ],
     [TEAM.CHAOS]: [
-      {q:0, r:-GRID_RADIUS}, {q:1, r:-GRID_RADIUS+1}, {q:-1, r:-GRID_RADIUS+1}
+      { q:  0, r:  GRID_RADIUS },
+      { q: -1, r:  GRID_RADIUS - 1 },
+      { q:  1, r:  GRID_RADIUS - 1 }
     ]
   };
+
 
   const byTeam = {
     [TEAM.IMPERIUM]: tokens.filter(t=>t.team===TEAM.IMPERIUM),
