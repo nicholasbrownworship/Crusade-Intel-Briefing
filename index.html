@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Crusade Map + Movement + Rumor Matchups (Strategic/Tactical)</title>
+  <title>Crusade Campaign Kit — Map + Movement + Rumors</title>
   <style>
     :root{
       --bg0:#07080b;
@@ -18,8 +18,7 @@
       --blue:#4aa6ff;
 
       --panel: rgba(255,255,255,0.06);
-      --panel2: rgba(255,255,255,0.09);
-      --stroke: rgba(255,255,255,0.12);
+      --stroke: rgba(255,255,255,0.14);
 
       --radius:18px;
       --shadow: 0 18px 50px rgba(0,0,0,0.45);
@@ -40,15 +39,14 @@
     }
 
     .app{
-      width:min(1320px, 100%);
+      width:min(1420px, 100%);
       margin:0 auto;
       display:grid;
-      grid-template-columns: 390px 1fr;
+      grid-template-columns: 400px 1fr;
       gap:16px;
       align-items:start;
     }
-
-    @media (max-width: 1100px){
+    @media (max-width: 1160px){
       .app{ grid-template-columns: 1fr; }
     }
 
@@ -169,15 +167,13 @@
     }
     .v{
       margin-top:6px;
-      font-weight:700;
+      font-weight:800;
       font-size:13px;
       line-height:1.25;
     }
 
-    .list{
-      display:grid;
-      gap:8px;
-    }
+    .list{ display:grid; gap:8px; }
+
     .tokenCard{
       border:1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.22);
@@ -205,7 +201,7 @@
       min-width: 0;
     }
     .tokenName{
-      font-weight:800;
+      font-weight:900;
       font-size:13px;
       line-height:1.2;
       white-space:nowrap;
@@ -231,7 +227,7 @@
       flex:0 0 auto;
     }
     .badge.blue{ border-color: rgba(74,166,255,0.35); color:#d8efff; }
-    .badge.gold{ border-color: rgba(209,161,75,0.35); color:#f2e6cf; }
+    .badge.green{ border-color: rgba(63,191,127,0.35); color:#d9fff0; }
     .badge.red{ border-color: rgba(204,59,59,0.35); color:#ffd6d6; }
 
     .log{
@@ -286,12 +282,14 @@
 
     svg{
       width:100%;
-      height:min(74vh, 820px);
+      height:min(74vh, 860px);
       display:block;
       background: radial-gradient(700px 480px at 40% 30%, rgba(255,255,255,0.06), transparent 60%);
       border-radius: 14px;
       border:1px solid rgba(255,255,255,0.10);
+      cursor: grab;
     }
+    svg.dragging{ cursor: grabbing; }
 
     .legend{
       padding:12px 16px;
@@ -324,7 +322,7 @@
       color: var(--ink);
       font-size:12px;
       line-height:1.4;
-      max-width: 420px;
+      max-width: 520px;
       opacity:0;
       transform: translateY(6px);
       transition: opacity .18s ease, transform .18s ease;
@@ -336,18 +334,19 @@
       opacity:1;
       transform: translateY(0);
     }
+
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
   </style>
 </head>
 <body>
   <div class="app">
-    <!-- LEFT: Control + Logs -->
+    <!-- LEFT -->
     <div class="panel">
       <div class="p-head">
         <div>
           <h1>Crusade Round Kit</h1>
           <div class="p-sub">
-            Movement creates pressure (Strategic rumors ≤ 4 hexes). LOS contact creates battles (Tactical rumors ≤ 2 hexes + LOS).
+            Strategic rumors: enemy within <span class="mono">4</span> hexes (no LOS). Tactical matchups: enemy within <span class="mono">2</span> hexes + LOS (locks a game).
           </div>
         </div>
         <div class="btnrow">
@@ -384,11 +383,11 @@
           </div>
 
           <div class="hint" style="margin-top:10px;">
-            <div><strong>Move rule:</strong> Roll d3 + team benefit. Then click a destination hex within that many steps (pathfinding respects blocked movement).</div>
+            <div><strong>Move rule:</strong> Roll d3 + team benefit. Then click a destination hex within that many steps (movement respects blocked hexes).</div>
             <div style="margin-top:6px;"><strong>Team benefits:</strong></div>
             <div>• <span class="mono">Imperium</span>: +1 move</div>
             <div>• <span class="mono">Xenos</span>: minimum roll is 2 (a d3 result of 1 becomes 2)</div>
-            <div>• <span class="mono">Chaos</span>: +1 effective move if your destination is closer to the nearest enemy than your starting hex (aggressive push)</div>
+            <div>• <span class="mono">Chaos</span>: +1 effective move if your destination is closer to the nearest enemy than your starting hex</div>
           </div>
 
           <div class="kv" style="margin-top:10px;">
@@ -409,33 +408,33 @@
         </div>
 
         <div class="section">
-          <h2>Strategic Rumors (pressure)</h2>
+          <h2>Strategic Rumors</h2>
           <div class="log" id="logStrategic"></div>
         </div>
 
         <div class="section">
-          <h2>Tactical Matchups (locked)</h2>
+          <h2>Tactical Matchups (Locked)</h2>
           <div class="log" id="logTactical"></div>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT: Map -->
+    <!-- RIGHT -->
     <div class="panel">
       <div class="mapTop">
         <div class="title">
           <div class="big">Hex Map</div>
-          <div class="small">Click a token to select. Roll move, then click a destination hex. Tactical contact locks a game.</div>
+          <div class="small">Mouse wheel: zoom • Click-drag: pan • Click token to select • Roll move, then click destination hex.</div>
         </div>
         <div class="mapTools">
           <button id="btnRegenTerrain" type="button">Randomize Terrain</button>
-          <button id="btnCenter" type="button">Center View</button>
+          <button id="btnCenter" type="button">Center</button>
           <button id="btnExport" type="button">Copy Round Export</button>
         </div>
       </div>
 
       <div class="mapWrap">
-        <svg id="svg" viewBox="0 0 1200 820" aria-label="Hex map"></svg>
+        <svg id="svg" viewBox="0 0 1200 860" aria-label="Hex map"></svg>
         <div class="toast" id="toast"></div>
       </div>
 
@@ -443,15 +442,15 @@
         <span><span class="dot i"></span>Imperium</span>
         <span><span class="dot x"></span>Xenos</span>
         <span><span class="dot c"></span>Chaos</span>
-        <span>• Terrain is randomized placeholder (you’ll curate later)</span>
-        <span>• Tactical contact requires LOS (blocked by “blackout” hexes)</span>
+        <span>• Hex label shows terrain + coords • ★ indicates important site</span>
+        <span>• <span class="mono">JAM</span> blocks LOS • <span class="mono">X</span> blocks movement</span>
       </div>
     </div>
   </div>
 
 <script>
 /* ===========================
-   DATA: FACTIONS / TEAMS
+   TEAMS + ARMIES (EXACT)
 =========================== */
 const TEAM = {
   IMPERIUM: "Imperium",
@@ -459,90 +458,82 @@ const TEAM = {
   CHAOS: "Chaos"
 };
 
-const FACTIONS = [
-  { team: TEAM.IMPERIUM, name: "Grey Knights" },
-  { team: TEAM.IMPERIUM, name: "Black Templar" },
-
-  { team: TEAM.XENOS, name: "Tau" },
-  { team: TEAM.XENOS, name: "Tyranids" },
-  { team: TEAM.XENOS, name: "Orks" },
-
-  { team: TEAM.CHAOS, name: "Death Guard" },
-  { team: TEAM.CHAOS, name: "World Eaters" },
-  { team: TEAM.CHAOS, name: "Emperor's Children" }
-];
-
-// Token counts requested: 3,3,2 per team
+// 8 tokens = exactly these 8 armies, assigned to exactly these teams
 const TOKEN_ROSTER = [
-  // Imperium (3)
+  // Imperium
   { team: TEAM.IMPERIUM, name: "Grey Knights", short: "GK" },
   { team: TEAM.IMPERIUM, name: "Black Templar", short: "BT" },
-  { team: TEAM.IMPERIUM, name: "Imperial Detachment", short: "IMP" },
 
-  // Xenos (3)
+  // Xenos
   { team: TEAM.XENOS, name: "Tau", short: "TAU" },
   { team: TEAM.XENOS, name: "Tyranids", short: "NID" },
   { team: TEAM.XENOS, name: "Orks", short: "ORK" },
 
-  // Chaos (2)
+  // Chaos
   { team: TEAM.CHAOS, name: "Death Guard", short: "DG" },
-  { team: TEAM.CHAOS, name: "World Eaters", short: "WE" }
+  { team: TEAM.CHAOS, name: "World Eaters", short: "WE" },
+  { team: TEAM.CHAOS, name: "Emperor's Children", short: "EC" }
 ];
 
 /* ===========================
    MAP: HEX GRID + TERRAIN
 =========================== */
 const HEX_SIZE = 34;          // px
-const GRID_RADIUS = 5;        // hex radius (bigger = more space)
-const CENTER = { x: 600, y: 410 };
+const GRID_RADIUS = 7;        // wider map (more exploration)
+const CENTER = { x: 600, y: 430 };
 
+// Clear, readable terrain set (with short labels)
 const BIOMES = [
-  { id:"plains", label:"Plains" },
-  { id:"forest", label:"Forest" },
-  { id:"water", label:"Water" },
-  { id:"mountains", label:"Mountains" },
-  { id:"ruins", label:"Ruins" },
-  { id:"ash", label:"Ash Wastes" }
+  { id:"plains",   label:"PLAINS",  abbr:"PL" },
+  { id:"forest",   label:"FOREST",  abbr:"FO" },
+  { id:"water",    label:"WATER",   abbr:"WA" },
+  { id:"ruins",    label:"RUINS",   abbr:"RU" },
+  { id:"hive",     label:"HIVE",    abbr:"HV" },
+  { id:"ash",      label:"ASH",     abbr:"AS" },
+  { id:"badlands", label:"BADLAND", abbr:"BD" }
 ];
 
-// “Operational traits” (40k-appropriate)
+// Operational traits
 const SPECIALS = [
-  { id:"none", label:"—", blocks_los:false, blocks_movement:false, weight: 86 },
-  { id:"blackout", label:"Sensor Blackout", blocks_los:true, blocks_movement:false, weight: 8 },
-  { id:"exclusion", label:"Exclusion Zone", blocks_los:false, blocks_movement:true, weight: 6 }
+  { id:"none",      label:"—",             blocks_los:false, blocks_movement:false, weight: 84 },
+  { id:"blackout",  label:"Sensor Blackout",blocks_los:true,  blocks_movement:false, weight: 10 },
+  { id:"exclusion", label:"Exclusion Zone", blocks_los:false, blocks_movement:true,  weight: 6  }
 ];
 
-// Important points to “flavor” rumors (not required for matchups)
+// Important points (for clearer destinations)
 const IMPORTANT_TYPES = [
-  { id:"spaceport", label:"Spaceport", weight: 20 },
-  { id:"manufactorum", label:"Manufactorum", weight: 20 },
-  { id:"relic_site", label:"Relic Site", weight: 18 },
-  { id:"vox_relay", label:"Vox Relay", weight: 22 },
-  { id:"shrine", label:"Shrine", weight: 20 }
+  { id:"spaceport",     label:"Spaceport",      weight: 18 },
+  { id:"manufactorum",  label:"Manufactorum",   weight: 18 },
+  { id:"relic_site",    label:"Relic Site",     weight: 18 },
+  { id:"vox_relay",     label:"Vox Relay",      weight: 22 },
+  { id:"shrine",        label:"Shrine",         weight: 18 },
+  { id:"promethium",    label:"Promethium Rig", weight: 12 },
+  { id:"data_vault",    label:"Data Vault",     weight: 12 }
 ];
 
 let hexes = new Map();   // key "q,r" -> {q,r, biome, special, important?}
-let tokens = [];         // token objects
+let tokens = [];
 let round = 1;
 
 let selectedTokenId = null;
 let plannedDestKey = null;
 
-/* Rumor / matchup state (per round) */
-let strategicRumors = [];     // {id, tokenA, tokenB, range, text}
+let strategicRumors = [];     // {id, tokenA, tokenB, text, locationKey}
 let tacticalMatchups = [];    // {id, tokenA, tokenB, locationKey, text}
-let seenStrategicPairs = new Set(); // "a|b" normalized pair, per round
+let seenStrategicPairs = new Set();
 
 /* ===========================
-   HELPERS
+   UI helpers
 =========================== */
 const $ = (id) => document.getElementById(id);
+const svg = $("svg");
+const svgNS = "http://www.w3.org/2000/svg";
+
 const keyOf = (q,r) => `${q},${r}`;
 const parseKey = (k) => {
   const [q,r] = k.split(",").map(Number);
   return {q,r};
 };
-const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
 function toast(msg){
   const el = $("toast");
@@ -553,7 +544,6 @@ function toast(msg){
 }
 
 function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-
 function weightedPick(items){
   const total = items.reduce((s,it)=>s+(it.weight||1),0);
   let r = Math.random()*total;
@@ -563,16 +553,31 @@ function weightedPick(items){
   }
   return items[items.length-1];
 }
+const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
 
 /* ===========================
    HEX MATH (axial q,r)
 =========================== */
+function axialDistance(aq,ar,bq,br){
+  const ax=aq, az=ar, ay=-ax-az;
+  const bx=bq, bz=br, by=-bx-bz;
+  return Math.max(Math.abs(ax-bx), Math.abs(ay-by), Math.abs(az-bz));
+}
+
+function neighborsOf(q,r){
+  const dirs = [
+    {dq: 1, dr: 0}, {dq: 1, dr:-1}, {dq: 0, dr:-1},
+    {dq:-1, dr: 0}, {dq:-1, dr: 1}, {dq: 0, dr: 1}
+  ];
+  return dirs.map(d => ({q:q+d.dq, r:r+d.dr}));
+}
+
 function axialToPixel(q,r){
-  // pointy-top axial
-  const x = HEX_SIZE * (Math.sqrt(3) * q + Math.sqrt(3)/2 * r) + CENTER.x;
-  const y = HEX_SIZE * (3/2 * r) + CENTER.y;
+  const x = HEX_SIZE * (Math.sqrt(3)*q + Math.sqrt(3)/2*r) + CENTER.x;
+  const y = HEX_SIZE * (3/2*r) + CENTER.y;
   return {x,y};
 }
+
 function hexCorners(q,r){
   const c = axialToPixel(q,r);
   const pts = [];
@@ -585,69 +590,50 @@ function hexCorners(q,r){
   }
   return pts;
 }
-function axialDistance(aq,ar,bq,br){
-  // cube distance
-  const ax = aq, az = ar, ay = -ax-az;
-  const bx = bq, bz = br, by = -bx-bz;
-  return Math.max(Math.abs(ax-bx), Math.abs(ay-by), Math.abs(az-bz));
-}
-function neighborsOf(q,r){
-  const dirs = [
-    {dq: 1, dr: 0}, {dq: 1, dr:-1}, {dq: 0, dr:-1},
-    {dq:-1, dr: 0}, {dq:-1, dr: 1}, {dq: 0, dr: 1}
-  ];
-  return dirs.map(d => ({q:q+d.dq, r:r+d.dr}));
-}
 
 /* Cube line for LOS */
-function cubeRound(x,y,z){
-  let rx = Math.round(x), ry = Math.round(y), rz = Math.round(z);
-  const dx = Math.abs(rx - x), dy = Math.abs(ry - y), dz = Math.abs(rz - z);
-  if(dx > dy && dx > dz) rx = -ry - rz;
-  else if(dy > dz) ry = -rx - rz;
-  else rz = -rx - ry;
-  return {x:rx, y:ry, z:rz};
-}
 function axialToCube(q,r){ return {x:q, z:r, y:-q-r}; }
 function cubeToAxial(c){ return {q:c.x, r:c.z}; }
-
-function cubeLerp(a,b,t){
-  return { x: a.x + (b.x-a.x)*t, y: a.y + (b.y-a.y)*t, z: a.z + (b.z-a.z)*t };
+function cubeLerp(a,b,t){ return { x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t, z:a.z+(b.z-a.z)*t }; }
+function cubeRound(x,y,z){
+  let rx=Math.round(x), ry=Math.round(y), rz=Math.round(z);
+  const dx=Math.abs(rx-x), dy=Math.abs(ry-y), dz=Math.abs(rz-z);
+  if(dx>dy && dx>dz) rx=-ry-rz;
+  else if(dy>dz) ry=-rx-rz;
+  else rz=-rx-ry;
+  return {x:rx,y:ry,z:rz};
 }
 function hexLine(aq,ar,bq,br){
-  const a = axialToCube(aq,ar), b = axialToCube(bq,br);
-  const N = axialDistance(aq,ar,bq,br);
-  const out = [];
+  const a=axialToCube(aq,ar), b=axialToCube(bq,br);
+  const N=axialDistance(aq,ar,bq,br);
+  const out=[];
   for(let i=0;i<=N;i++){
-    const t = (N===0) ? 0 : (i / N);
-    const cr = cubeRound(...Object.values(cubeLerp(a,b,t)));
-    out.push(cubeToAxial(cr));
+    const t = (N===0) ? 0 : (i/N);
+    const p = cubeLerp(a,b,t);
+    const r = cubeRound(p.x,p.y,p.z);
+    out.push(cubeToAxial(r));
   }
   return out;
 }
 function hasLOS(aq,ar,bq,br){
   const line = hexLine(aq,ar,bq,br);
-  // exclude endpoints
   for(let i=1;i<line.length-1;i++){
     const k = keyOf(line[i].q, line[i].r);
     const h = hexes.get(k);
-    if(h && h.special && h.special.blocks_los) return false;
+    if(h?.special?.blocks_los) return false;
   }
   return true;
 }
 
 /* ===========================
    PATHFINDING (movement)
-   BFS shortest path length within movement
 =========================== */
 function shortestPathLength(fromKey, toKey){
   if(fromKey===toKey) return 0;
   const start = parseKey(fromKey);
-  const goal = parseKey(toKey);
 
-  const q0 = start.q, r0 = start.r;
   const visited = new Set([fromKey]);
-  const queue = [{q:q0, r:r0, d:0}];
+  const queue = [{q:start.q, r:start.r, d:0}];
 
   while(queue.length){
     const cur = queue.shift();
@@ -656,7 +642,7 @@ function shortestPathLength(fromKey, toKey){
       if(visited.has(nk)) continue;
       const h = hexes.get(nk);
       if(!h) continue;
-      if(h.special?.blocks_movement) continue; // impassable
+      if(h.special?.blocks_movement) continue;
 
       visited.add(nk);
       const nd = cur.d + 1;
@@ -668,7 +654,7 @@ function shortestPathLength(fromKey, toKey){
 }
 
 /* ===========================
-   TERRAIN / IMPORTANT HEXES
+   TERRAIN
 =========================== */
 function generateHexes(){
   hexes = new Map();
@@ -676,44 +662,36 @@ function generateHexes(){
     for(let r=-GRID_RADIUS; r<=GRID_RADIUS; r++){
       if(axialDistance(0,0,q,r) > GRID_RADIUS) continue;
 
-      const biome = BIOMES[randInt(0, BIOMES.length-1)];
+      const biome = pick(BIOMES);
       const special = weightedPick(SPECIALS);
 
-      hexes.set(keyOf(q,r), {
-        q,r,
-        biome,
-        special,
-        important: null
-      });
+      hexes.set(keyOf(q,r), { q,r, biome, special, important:null });
     }
   }
 
-  // sprinkle a few important hexes (6–8)
+  // sprinkle important sites (10–12, since map is bigger)
   const keys = [...hexes.keys()];
-  const count = randInt(6,8);
+  const count = randInt(10,12);
   for(let i=0;i<count;i++){
     const k = keys[randInt(0, keys.length-1)];
     const h = hexes.get(k);
     if(!h || h.special.blocks_movement) { i--; continue; }
     if(h.important) { i--; continue; }
-    const it = weightedPick(IMPORTANT_TYPES);
-    h.important = {
-      type: it.id,
-      label: it.label,
-      importance: randInt(2,5)
-    };
-  }
-}
 
-function teamColor(team){
-  if(team===TEAM.IMPERIUM) return { stroke:"rgba(74,166,255,0.55)", fill:"rgba(74,166,255,0.22)", badge:"blue" };
-  if(team===TEAM.XENOS)    return { stroke:"rgba(63,191,127,0.55)", fill:"rgba(63,191,127,0.22)", badge:"green" };
-  return { stroke:"rgba(204,59,59,0.55)", fill:"rgba(204,59,59,0.22)", badge:"red" };
+    const it = weightedPick(IMPORTANT_TYPES);
+    h.important = { type: it.id, label: it.label, importance: randInt(2,5) };
+  }
 }
 
 /* ===========================
    TOKENS
 =========================== */
+function teamColor(team){
+  if(team===TEAM.IMPERIUM) return { stroke:"rgba(74,166,255,0.62)", fill:"rgba(74,166,255,0.22)", badge:"blue" };
+  if(team===TEAM.XENOS)    return { stroke:"rgba(63,191,127,0.62)", fill:"rgba(63,191,127,0.22)", badge:"green" };
+  return { stroke:"rgba(204,59,59,0.62)", fill:"rgba(204,59,59,0.22)", badge:"red" };
+}
+
 function placeTokens(){
   tokens = TOKEN_ROSTER.map((t, idx) => ({
     id: `t${idx+1}`,
@@ -721,26 +699,24 @@ function placeTokens(){
     faction: t.name,
     short: t.short,
     q: 0, r: 0,
-    status: "available",  // available | engaged
+    status: "available",
     movePoints: null,
-    moveFrom: null,       // key at start of move
-    lastMovedThisRound: false
+    moveFrom: null
   }));
 
-  // Starting regions (corners)
+  // Start regions (3 “corners”)
   const starts = {
     [TEAM.IMPERIUM]: [
-      {q:-GRID_RADIUS, r:0}, {q:-GRID_RADIUS+1, r:-1}, {q:-GRID_RADIUS+1, r:0}
+      {q:-GRID_RADIUS, r:0}, {q:-GRID_RADIUS+1, r:-1}
     ],
     [TEAM.XENOS]: [
       {q:GRID_RADIUS, r:0}, {q:GRID_RADIUS-1, r:1}, {q:GRID_RADIUS-1, r:0}
     ],
     [TEAM.CHAOS]: [
-      {q:0, r:-GRID_RADIUS}, {q:1, r:-GRID_RADIUS+1}
+      {q:0, r:-GRID_RADIUS}, {q:1, r:-GRID_RADIUS+1}, {q:-1, r:-GRID_RADIUS+1}
     ]
   };
 
-  // assign positions
   const byTeam = {
     [TEAM.IMPERIUM]: tokens.filter(t=>t.team===TEAM.IMPERIUM),
     [TEAM.XENOS]: tokens.filter(t=>t.team===TEAM.XENOS),
@@ -752,13 +728,14 @@ function placeTokens(){
     const spots = starts[team] || [];
     arr.forEach((tok, i) => {
       const s = spots[i] || {q:0,r:0};
-      // if chosen spot is blocked, nudge inward
       let q=s.q, r=s.r;
-      for(let tries=0; tries<8; tries++){
+      for(let tries=0; tries<10; tries++){
         const h = hexes.get(keyOf(q,r));
         if(h && !h.special.blocks_movement) break;
-        q = clamp(q + (team===TEAM.IMPERIUM?1:team===TEAM.XENOS?-1:0), -GRID_RADIUS, GRID_RADIUS);
-        r = clamp(r + (team===TEAM.CHAOS?1:0), -GRID_RADIUS, GRID_RADIUS);
+        // nudge inward
+        if(team===TEAM.IMPERIUM) q++;
+        if(team===TEAM.XENOS) q--;
+        if(team===TEAM.CHAOS) r++;
       }
       tok.q=q; tok.r=r;
     });
@@ -768,9 +745,22 @@ function placeTokens(){
 }
 
 /* ===========================
-   MOVEMENT RULES
+   MOVEMENT
 =========================== */
 function d3(){ return randInt(1,3); }
+
+function nearestEnemyDistance(tokenId, q, r){
+  const me = tokens.find(t=>t.id===tokenId);
+  if(!me) return Infinity;
+  let best = Infinity;
+  for(const other of tokens){
+    if(other.id===me.id) continue;
+    if(other.status !== "available") continue;
+    if(other.team === me.team) continue;
+    best = Math.min(best, axialDistance(q,r, other.q, other.r));
+  }
+  return best;
+}
 
 function rollMoveFor(token){
   if(!token) return;
@@ -779,24 +769,23 @@ function rollMoveFor(token){
     return;
   }
   const roll = d3();
-  let base = roll;
+  let move = roll;
 
   if(token.team === TEAM.IMPERIUM){
-    base = roll + 1;
+    move = roll + 1;
   } else if(token.team === TEAM.XENOS){
-    base = Math.max(2, roll); // 1 becomes 2
+    move = Math.max(2, roll);
   } else if(token.team === TEAM.CHAOS){
-    base = roll; // conditional +1 handled at destination check
+    move = roll; // +1 conditional at destination check
   }
 
-  token.movePoints = base;
+  token.movePoints = move;
   token.moveFrom = keyOf(token.q, token.r);
   plannedDestKey = null;
 
-  toast(`Move rolled for ${token.faction}: d3=${roll} → Move=${base} (team benefit applied)`);
+  toast(`Move rolled for ${token.faction}: d3=${roll} → Move=${move}`);
 }
 
-/* Chaos “aggressive push”: +1 effective move if destination is closer to nearest enemy than start */
 function chaosEffectiveMove(token, destKey){
   if(token.team !== TEAM.CHAOS) return token.movePoints ?? 0;
   if(token.movePoints == null || !token.moveFrom) return token.movePoints ?? 0;
@@ -814,54 +803,36 @@ function chaosEffectiveMove(token, destKey){
   return eff;
 }
 
-function nearestEnemyDistance(tokenId, q, r){
-  const me = tokens.find(t=>t.id===tokenId);
-  if(!me) return Infinity;
-  let best = Infinity;
-  for(const other of tokens){
-    if(other.id===me.id) continue;
-    if(other.status !== "available") continue;
-    if(other.team === me.team) continue;
-    const d = axialDistance(q,r, other.q, other.r);
-    if(d < best) best = d;
-  }
-  return best;
-}
-
 /* ===========================
-   RUMORS (2 LAYERS)
-   Strategic: distance <= 4 (movement only)
-   Tactical: distance <= 2 + LOS (locks matchup)
+   RUMORS (2 layers)
 =========================== */
 const STRATEGIC_TEMPLATES = [
-  "Long-range augur sweeps suggest hostile redeployment near {place}. No visual confirmation. Patterns indicate {theme}.",
-  "Astropathic traffic spikes around {place}. Reports are inconsistent, but point to {theme}. Treat as pressure, not contact.",
-  "Civilian rumor chains and vox static converge near {place}. The situation reads as {theme}. Expect misdirection."
+  "Long-range augurs register hostile movement near {place}. No visual confirmation. Indicators suggest {theme}.",
+  "Vox-traffic distortions cluster around {place}. Reports conflict, but point to {theme}. Treat as pressure.",
+  "Civilian rumor chains and intercepted chatter mention {place}. The pattern reads as {theme}. Expect misdirection."
 ];
 
 const TACTICAL_TEMPLATES = [
-  "Forward elements confirm enemy presence near {place}. Visual contact established. Engagement likely within hours: {a} vs {b}.",
-  "Auspex lock achieved at {place}. Patrols report immediate threat. Command authorizes action: {a} against {b}.",
-  "Confirmed sightings and weapons-range indicators at {place}. This is no longer conjecture: {a} will clash with {b}."
+  "Forward elements confirm enemy presence near {place}. Visual contact established: {a} vs {b}.",
+  "Auspex lock achieved at {place}. Immediate threat confirmed. Matchup authorized: {a} against {b}.",
+  "Confirmed sightings at {place}. This is no longer conjecture — {a} will clash with {b}."
 ];
 
 const THEMES_BY_BIOME = {
-  plains: ["rapid maneuver", "flanking pressure", "feints and counter-feints", "breakthrough attempts"],
-  forest: ["infiltration signs", "missing scouts", "ambush corridors", "concealed approach routes"],
-  water: ["crossing disruption", "isolated detachments", "supply delays", "stranded reinforcements"],
-  mountains: ["chokepoint control", "overwatch positions", "delayed columns", "high-ground firebases"],
-  ruins: ["close-quarters sweeps", "hidden assets", "civilian unrest", "shadowed kill-zones"],
-  ash: ["sensor noise", "toxic exposure", "auspex distortion", "lost bearings"]
+  plains:   ["rapid maneuver", "flanking pressure", "breakthrough attempts", "counter-advances"],
+  forest:   ["infiltration signs", "missing scouts", "ambush corridors", "concealed approach routes"],
+  water:    ["crossing disruption", "isolated detachments", "supply delays", "stranded reinforcements"],
+  ruins:    ["close-quarters sweeps", "hidden assets", "civilian unrest", "shadowed kill-zones"],
+  hive:     ["crowded kill zones", "data-theft risk", "insurrection whispers", "sealed bulkheads shifting"],
+  ash:      ["sensor noise", "toxic exposure", "auspex distortion", "lost bearings"],
+  badlands: ["chokepoints", "raider lanes", "false trails", "line-of-advance traps"]
 };
 
-function normalizePair(aId,bId){
-  return [aId,bId].sort().join("|");
-}
+function normalizePair(aId,bId){ return [aId,bId].sort().join("|"); }
 
 function bestContextPlace(a, b){
-  // pick the best nearby important hex within 2 of either token; else use midpoint biome
-  let best = null;
-  let bestScore = -1;
+  // Prefer nearest important hex within 2 of either token; else use midpoint biome.
+  let best=null, bestScore=-1;
 
   for(const [k,h] of hexes.entries()){
     if(h.special?.blocks_movement) continue;
@@ -871,25 +842,21 @@ function bestContextPlace(a, b){
 
     let score = 0;
     if(h.important) score += h.important.importance * 10;
-    if(h.special?.blocks_los) score += 6; // “blackout zones” are narratively spicy
+    if(h.special?.blocks_los) score += 6;      // blackout is narratively spicy
     score += (2 - Math.min(da,db)) * 2;
-    if(score > bestScore){
-      bestScore = score;
-      best = { key:k, hex:h };
-    }
+    if(score > bestScore){ bestScore=score; best={k,h}; }
   }
 
   if(best){
-    const h = best.hex;
+    const h = best.h;
     const parts = [];
-    if(h.important) parts.push(h.important.label);
+    if(h.important) parts.push("★ " + h.important.label);
     parts.push(h.biome.label);
-    if(h.special?.id === "blackout") parts.push("Blackout Zone");
-    if(h.special?.id === "exclusion") parts.push("Exclusion Zone");
-    return { place: parts.join(" — "), biomeId: h.biome.id, key: best.key };
+    if(h.special?.id === "blackout") parts.push("JAMMED");
+    if(h.special?.id === "exclusion") parts.push("EXCLUSION");
+    return { place: parts.join(" — "), biomeId: h.biome.id, key: best.k };
   }
 
-  // fallback: midpoint-ish hex (closest existing)
   const mq = Math.round((a.q + b.q)/2);
   const mr = Math.round((a.r + b.r)/2);
   const mk = keyOf(mq,mr);
@@ -904,228 +871,196 @@ function bestContextPlace(a, b){
 function generateStrategicRumor(a, b){
   const ctx = bestContextPlace(a,b);
   const themePool = THEMES_BY_BIOME[ctx.biomeId] || THEMES_BY_BIOME.plains;
-  const tpl = STRATEGIC_TEMPLATES[randInt(0, STRATEGIC_TEMPLATES.length-1)];
-  const text = tpl
-    .replace("{place}", ctx.place)
-    .replace("{theme}", themePool[randInt(0, themePool.length-1)]);
-  return { text, locationKey: ctx.key };
+  const tpl = pick(STRATEGIC_TEMPLATES);
+  return {
+    text: tpl.replace("{place}", ctx.place).replace("{theme}", pick(themePool)),
+    locationKey: ctx.key
+  };
 }
 
 function generateTacticalRumor(a, b){
   const ctx = bestContextPlace(a,b);
-  const tpl = TACTICAL_TEMPLATES[randInt(0, TACTICAL_TEMPLATES.length-1)];
-  const text = tpl
-    .replace("{place}", ctx.place)
-    .replace("{a}", a.faction)
-    .replace("{b}", b.faction);
-  return { text, locationKey: ctx.key };
+  const tpl = pick(TACTICAL_TEMPLATES);
+  return {
+    text: tpl.replace("{place}", ctx.place).replace("{a}", a.faction).replace("{b}", b.faction),
+    locationKey: ctx.key
+  };
 }
 
 function checkRumorsAfterMove(movedToken){
   if(!movedToken || movedToken.status !== "available") return;
 
-  // ---- Tactical first: within 2 + LOS, both available, different teams
+  // Tactical first: within 2 + LOS
   const candidatesTac = [];
   for(const other of tokens){
     if(other.id === movedToken.id) continue;
     if(other.status !== "available") continue;
     if(other.team === movedToken.team) continue;
     const d = axialDistance(movedToken.q, movedToken.r, other.q, other.r);
-    if(d <= 2){
-      const los = hasLOS(movedToken.q, movedToken.r, other.q, other.r);
-      if(los) candidatesTac.push({ other, d });
+    if(d <= 2 && hasLOS(movedToken.q, movedToken.r, other.q, other.r)){
+      candidatesTac.push({ other, d });
     }
   }
   candidatesTac.sort((a,b)=>a.d-b.d);
   if(candidatesTac.length){
     const enemy = candidatesTac[0].other;
-    const pairKey = normalizePair(movedToken.id, enemy.id);
-
-    // lock if not already locked (shouldn't be)
     const r = generateTacticalRumor(movedToken, enemy);
 
     movedToken.status = "engaged";
     enemy.status = "engaged";
 
-    const mid = {
+    tacticalMatchups.push({
       id: `M-${round}-${tacticalMatchups.length+1}`,
       tokenA: movedToken.id,
       tokenB: enemy.id,
       locationKey: r.locationKey,
       text: r.text,
       createdAt: Date.now()
-    };
-    tacticalMatchups.push(mid);
+    });
 
     toast(`TACTICAL CONTACT: matchup locked → ${movedToken.faction} vs ${enemy.faction}`);
     renderAll();
-    return; // tactical ends the chain
+    return;
   }
 
-  // ---- Strategic: within 4 (movement only), no LOS required
+  // Strategic: within 4, no LOS
   const candidatesStrat = [];
   for(const other of tokens){
     if(other.id === movedToken.id) continue;
     if(other.status !== "available") continue;
     if(other.team === movedToken.team) continue;
+
     const d = axialDistance(movedToken.q, movedToken.r, other.q, other.r);
     if(d <= 4){
       const pairKey = normalizePair(movedToken.id, other.id);
-      if(seenStrategicPairs.has(pairKey)) continue; // don’t spam same pair this round
+      if(seenStrategicPairs.has(pairKey)) continue;
       candidatesStrat.push({ other, d, pairKey });
     }
   }
   candidatesStrat.sort((a,b)=>a.d-b.d);
   if(candidatesStrat.length){
-    const pickC = candidatesStrat[0];
-    seenStrategicPairs.add(pickC.pairKey);
+    const c = candidatesStrat[0];
+    seenStrategicPairs.add(c.pairKey);
 
-    const r = generateStrategicRumor(movedToken, pickC.other);
+    const r = generateStrategicRumor(movedToken, c.other);
     strategicRumors.push({
       id: `S-${round}-${strategicRumors.length+1}`,
       tokenA: movedToken.id,
-      tokenB: pickC.other.id,
-      range: pickC.d,
+      tokenB: c.other.id,
       text: r.text,
       locationKey: r.locationKey,
       createdAt: Date.now()
     });
 
-    toast(`Strategic pressure detected (≤4): ${movedToken.faction} near ${pickC.other.faction}`);
+    toast(`Strategic pressure (≤4): ${movedToken.faction} near ${c.other.faction}`);
     renderAll();
   }
 }
 
 /* ===========================
-   UI + RENDER
+   SVG draw
 =========================== */
-const svgNS = "http://www.w3.org/2000/svg";
-const svg = $("svg");
-
-function clearSVG(){
-  while(svg.firstChild) svg.removeChild(svg.firstChild);
-}
+function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
 
 function biomeStyle(h){
-  // minimalist color tint by biome (no hard-coded colors required beyond subtle alpha)
-  // using different opacity patterns rather than specific “colors”
-  // We'll vary only stroke/alpha; fill uses generic panel tint.
-  const baseFill = "rgba(255,255,255,0.04)";
-  let stroke = "rgba(255,255,255,0.12)";
-  let fill = baseFill;
+  // stronger stroke + clearer fill differences
+  let fill = "rgba(255,255,255,0.05)";
+  let stroke = "rgba(255,255,255,0.18)";
 
   switch(h.biome.id){
-    case "forest":
-      fill = "rgba(63,191,127,0.06)";
-      stroke = "rgba(63,191,127,0.18)";
-      break;
-    case "water":
-      fill = "rgba(74,166,255,0.06)";
-      stroke = "rgba(74,166,255,0.18)";
-      break;
-    case "mountains":
-      fill = "rgba(255,255,255,0.05)";
-      stroke = "rgba(255,255,255,0.18)";
-      break;
-    case "ruins":
-      fill = "rgba(209,161,75,0.06)";
-      stroke = "rgba(209,161,75,0.20)";
-      break;
-    case "ash":
-      fill = "rgba(204,59,59,0.05)";
-      stroke = "rgba(204,59,59,0.18)";
-      break;
-    default:
-      fill = baseFill;
-      stroke = "rgba(255,255,255,0.12)";
+    case "forest":   fill="rgba(63,191,127,0.07)"; stroke="rgba(63,191,127,0.24)"; break;
+    case "water":    fill="rgba(74,166,255,0.07)"; stroke="rgba(74,166,255,0.24)"; break;
+    case "ruins":    fill="rgba(209,161,75,0.07)"; stroke="rgba(209,161,75,0.26)"; break;
+    case "hive":     fill="rgba(255,255,255,0.06)"; stroke="rgba(255,255,255,0.26)"; break;
+    case "ash":      fill="rgba(204,59,59,0.06)"; stroke="rgba(204,59,59,0.22)"; break;
+    case "badlands": fill="rgba(209,161,75,0.05)"; stroke="rgba(209,161,75,0.22)"; break;
+    default: break;
   }
 
   if(h.special?.id === "blackout"){
-    stroke = "rgba(204,59,59,0.30)";
-    fill = "rgba(0,0,0,0.30)";
+    stroke = "rgba(204,59,59,0.42)";
+    fill = "rgba(0,0,0,0.34)";
   }
   if(h.special?.id === "exclusion"){
-    stroke = "rgba(204,59,59,0.40)";
-    fill = "rgba(204,59,59,0.08)";
+    stroke = "rgba(204,59,59,0.50)";
+    fill = "rgba(204,59,59,0.09)";
   }
-
   return {fill, stroke};
 }
 
 function drawHexes(){
-  // draw hex polygons
   for(const [k,h] of hexes.entries()){
     const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
-    const poly = document.createElementNS(svgNS, "polygon");
     const st = biomeStyle(h);
 
+    const poly = document.createElementNS(svgNS, "polygon");
     poly.setAttribute("points", pts);
     poly.setAttribute("fill", st.fill);
     poly.setAttribute("stroke", st.stroke);
-    poly.setAttribute("stroke-width", "1.3");
+    poly.setAttribute("stroke-width", "1.6");
     poly.setAttribute("data-hex", k);
-
-    // click to set destination
-    poly.addEventListener("click", () => onHexClicked(k));
-
+    poly.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onHexClicked(k);
+    });
     svg.appendChild(poly);
 
-    // important marker
+    // Hex label: "ABBR q,r" (clear identity)
+    const c = axialToPixel(h.q,h.r);
+    const label = document.createElementNS(svgNS, "text");
+    label.setAttribute("x", c.x);
+    label.setAttribute("y", c.y + 3);
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("font-size", "9.5");
+    label.setAttribute("fill", "rgba(255,255,255,0.70)");
+    label.setAttribute("class","mono");
+    label.setAttribute("pointer-events","none");
+    label.textContent = `${h.biome.abbr} ${h.q},${h.r}`;
+    svg.appendChild(label);
+
+    // Important marker
     if(h.important){
-      const c = axialToPixel(h.q,h.r);
-      const g = document.createElementNS(svgNS, "g");
-      const ring = document.createElementNS(svgNS, "circle");
-      ring.setAttribute("cx", c.x);
-      ring.setAttribute("cy", c.y);
-      ring.setAttribute("r", "7.5");
-      ring.setAttribute("fill", "rgba(209,161,75,0.12)");
-      ring.setAttribute("stroke", "rgba(209,161,75,0.45)");
-      ring.setAttribute("stroke-width", "1.2");
-      g.appendChild(ring);
-
-      const dot = document.createElementNS(svgNS, "circle");
-      dot.setAttribute("cx", c.x);
-      dot.setAttribute("cy", c.y);
-      dot.setAttribute("r", "2.6");
-      dot.setAttribute("fill", "rgba(209,161,75,0.55)");
-      g.appendChild(dot);
-
-      g.setAttribute("pointer-events", "none");
-      svg.appendChild(g);
+      const star = document.createElementNS(svgNS, "text");
+      star.setAttribute("x", c.x);
+      star.setAttribute("y", c.y - 12);
+      star.setAttribute("text-anchor", "middle");
+      star.setAttribute("font-size", "12");
+      star.setAttribute("fill", "rgba(209,161,75,0.85)");
+      star.setAttribute("pointer-events","none");
+      star.textContent = "★";
+      svg.appendChild(star);
     }
 
-    // special marker label
+    // Special markers
     if(h.special?.id === "blackout"){
-      const c = axialToPixel(h.q,h.r);
       const t = document.createElementNS(svgNS, "text");
       t.setAttribute("x", c.x);
-      t.setAttribute("y", c.y + 3);
+      t.setAttribute("y", c.y + 18);
       t.setAttribute("text-anchor", "middle");
       t.setAttribute("font-size", "9.5");
-      t.setAttribute("fill", "rgba(255,255,255,0.60)");
+      t.setAttribute("fill", "rgba(255,255,255,0.72)");
       t.setAttribute("class","mono");
-      t.textContent = "JAM";
       t.setAttribute("pointer-events","none");
+      t.textContent = "JAM";
       svg.appendChild(t);
     }
     if(h.special?.id === "exclusion"){
-      const c = axialToPixel(h.q,h.r);
       const t = document.createElementNS(svgNS, "text");
       t.setAttribute("x", c.x);
-      t.setAttribute("y", c.y + 3);
+      t.setAttribute("y", c.y + 18);
       t.setAttribute("text-anchor", "middle");
-      t.setAttribute("font-size", "9.5");
-      t.setAttribute("fill", "rgba(255,255,255,0.65)");
+      t.setAttribute("font-size", "10.5");
+      t.setAttribute("fill", "rgba(255,255,255,0.78)");
       t.setAttribute("class","mono");
-      t.textContent = "X";
       t.setAttribute("pointer-events","none");
+      t.textContent = "X";
       svg.appendChild(t);
     }
   }
 }
 
 function drawHighlights(){
-  // Destination highlight
+  // destination highlight
   if(plannedDestKey){
     const h = hexes.get(plannedDestKey);
     if(h){
@@ -1133,14 +1068,14 @@ function drawHighlights(){
       const poly = document.createElementNS(svgNS, "polygon");
       poly.setAttribute("points", pts);
       poly.setAttribute("fill", "rgba(74,166,255,0.10)");
-      poly.setAttribute("stroke", "rgba(74,166,255,0.50)");
-      poly.setAttribute("stroke-width", "2.2");
+      poly.setAttribute("stroke", "rgba(74,166,255,0.55)");
+      poly.setAttribute("stroke-width", "2.4");
       poly.setAttribute("pointer-events", "none");
       svg.appendChild(poly);
     }
   }
 
-  // Selected token hex outline
+  // selected token hex outline
   const tok = getSelectedToken();
   if(tok){
     const k = keyOf(tok.q,tok.r);
@@ -1150,8 +1085,8 @@ function drawHighlights(){
       const poly = document.createElementNS(svgNS, "polygon");
       poly.setAttribute("points", pts);
       poly.setAttribute("fill", "transparent");
-      poly.setAttribute("stroke", "rgba(255,255,255,0.55)");
-      poly.setAttribute("stroke-width", "2.2");
+      poly.setAttribute("stroke", "rgba(255,255,255,0.65)");
+      poly.setAttribute("stroke-width", "2.4");
       poly.setAttribute("pointer-events", "none");
       svg.appendChild(poly);
     }
@@ -1167,27 +1102,25 @@ function drawTokens(){
 
     const col = teamColor(tok.team);
 
-    // ring
     const ring = document.createElementNS(svgNS, "circle");
     ring.setAttribute("cx", c.x);
     ring.setAttribute("cy", c.y);
     ring.setAttribute("r", "16");
     ring.setAttribute("fill", col.fill);
     ring.setAttribute("stroke", col.stroke);
-    ring.setAttribute("stroke-width", tok.id===selectedTokenId ? "3.0" : "2.0");
+    ring.setAttribute("stroke-width", tok.id===selectedTokenId ? "3.2" : "2.2");
     if(tok.status === "engaged"){
       ring.setAttribute("stroke-dasharray", "3 3");
       ring.setAttribute("fill", "rgba(255,255,255,0.03)");
     }
     g.appendChild(ring);
 
-    // label
     const t = document.createElementNS(svgNS, "text");
     t.setAttribute("x", c.x);
     t.setAttribute("y", c.y + 4);
     t.setAttribute("text-anchor", "middle");
     t.setAttribute("font-size", "10.5");
-    t.setAttribute("fill", "rgba(255,255,255,0.82)");
+    t.setAttribute("fill", "rgba(255,255,255,0.86)");
     t.setAttribute("class","mono");
     t.textContent = tok.short;
     g.appendChild(t);
@@ -1201,6 +1134,16 @@ function drawTokens(){
   }
 }
 
+function renderMap(){
+  clearSVG();
+  drawHexes();
+  drawTokens();
+  drawHighlights();
+}
+
+/* ===========================
+   Left UI
+=========================== */
 function getSelectedToken(){
   return tokens.find(t=>t.id===selectedTokenId) || null;
 }
@@ -1252,27 +1195,20 @@ function renderLogs(){
     const a = tokens.find(t=>t.id===r.tokenA);
     const b = tokens.find(t=>t.id===r.tokenB);
     const loc = hexes.get(r.locationKey);
-    const place = loc?.important ? loc.important.label : (loc?.biome?.label || "Unknown");
-    return `• [${r.id}] (${a?.short} vs ${b?.short}) range≤4 @ ${place}\n  ${r.text}`;
+    const place = loc?.important ? `★ ${loc.important.label}` : (loc?.biome?.label || "Unknown");
+    return `• [${r.id}] ${a?.short} ↔ ${b?.short} @ ${place}\n  ${r.text}`;
   }).join("\n\n");
 
   const t = tacticalMatchups.map(m => {
     const a = tokens.find(t=>t.id===m.tokenA);
     const b = tokens.find(t=>t.id===m.tokenB);
     const loc = hexes.get(m.locationKey);
-    const place = loc?.important ? loc.important.label : (loc?.biome?.label || "Unknown");
+    const place = loc?.important ? `★ ${loc.important.label}` : (loc?.biome?.label || "Unknown");
     return `• [${m.id}] MATCHUP LOCKED @ ${place}\n  ${a?.faction} vs ${b?.faction}\n  ${m.text}`;
   }).join("\n\n");
 
   $("logStrategic").textContent = s || "—";
   $("logTactical").textContent = t || "—";
-}
-
-function renderMap(){
-  clearSVG();
-  drawHexes();
-  drawTokens();
-  drawHighlights();
 }
 
 function renderAll(){
@@ -1283,7 +1219,7 @@ function renderAll(){
 }
 
 /* ===========================
-   INTERACTION
+   Interaction
 =========================== */
 function selectToken(id){
   selectedTokenId = id;
@@ -1295,7 +1231,6 @@ function onHexClicked(hexKey){
   const tok = getSelectedToken();
   if(!tok) return;
 
-  // if no move is rolled, we just set a "planned destination"
   plannedDestKey = hexKey;
   $("selDest").textContent = plannedDestKey;
 
@@ -1305,7 +1240,6 @@ function onHexClicked(hexKey){
     return;
   }
 
-  // movement legality
   const dist = shortestPathLength(keyOf(tok.q,tok.r), hexKey);
   if(!Number.isFinite(dist) || dist === Infinity){
     toast("No valid path (blocked movement).");
@@ -1318,21 +1252,20 @@ function onHexClicked(hexKey){
     return;
   }
 
-  // execute move
   const dest = parseKey(hexKey);
   tok.q = dest.q;
   tok.r = dest.r;
 
-  // clear move state
   tok.movePoints = null;
   tok.moveFrom = null;
 
-  // check rumors based on new position
   checkRumorsAfterMove(tok);
-
   renderAll();
 }
 
+/* ===========================
+   Buttons
+=========================== */
 $("btnRollMove").addEventListener("click", () => {
   const tok = getSelectedToken();
   if(!tok) return;
@@ -1352,12 +1285,10 @@ $("btnClearMove").addEventListener("click", () => {
 
 $("btnNewRound").addEventListener("click", () => {
   round += 1;
-  // Clear rumors/matchups for a fresh round; keep map & token positions.
   strategicRumors = [];
   tacticalMatchups = [];
   seenStrategicPairs = new Set();
 
-  // Unlock tokens for new round
   for(const t of tokens){
     t.status = "available";
     t.movePoints = null;
@@ -1376,33 +1307,28 @@ $("btnResetMap").addEventListener("click", () => {
   generateHexes();
   placeTokens();
   plannedDestKey = null;
+
+  resetView();
   toast("Map and round state reset.");
   renderAll();
 });
 
 $("btnRegenTerrain").addEventListener("click", () => {
   generateHexes();
-  // keep token positions, but if any token is now on a blocked hex, nudge them
+  // Keep token positions, but if any token is now on a blocked hex, nudge them
   for(const tok of tokens){
-    let k = keyOf(tok.q,tok.r);
-    let h = hexes.get(k);
-    if(h && h.special?.blocks_movement){
-      // nudge to nearest non-blocked neighbor
+    const k = keyOf(tok.q,tok.r);
+    const h = hexes.get(k);
+    if(h?.special?.blocks_movement){
       const nbs = neighborsOf(tok.q,tok.r);
-      let moved = false;
+      let moved=false;
       for(const nb of nbs){
-        const nk = keyOf(nb.q, nb.r);
-        const nh = hexes.get(nk);
+        const nh = hexes.get(keyOf(nb.q,nb.r));
         if(nh && !nh.special.blocks_movement){
-          tok.q = nb.q; tok.r = nb.r;
-          moved = true;
-          break;
+          tok.q=nb.q; tok.r=nb.r; moved=true; break;
         }
       }
-      if(!moved){
-        // fallback to center
-        tok.q=0; tok.r=0;
-      }
+      if(!moved){ tok.q=0; tok.r=0; }
     }
   }
   toast("Terrain randomized (tokens preserved).");
@@ -1410,17 +1336,15 @@ $("btnRegenTerrain").addEventListener("click", () => {
 });
 
 $("btnCenter").addEventListener("click", () => {
-  // Reset viewBox to default
-  svg.setAttribute("viewBox", "0 0 1200 820");
+  resetView();
   toast("View centered.");
 });
 
 $("btnExport").addEventListener("click", async () => {
   const exportObj = {
     round,
-    tokens: tokens.map(t=>({
-      id:t.id, team:t.team, faction:t.faction, short:t.short, q:t.q, r:t.r, status:t.status
-    })),
+    map: { gridRadius: GRID_RADIUS },
+    tokens: tokens.map(t=>({ id:t.id, team:t.team, faction:t.faction, short:t.short, q:t.q, r:t.r, status:t.status })),
     strategicRumors,
     tacticalMatchups
   };
@@ -1429,10 +1353,88 @@ $("btnExport").addEventListener("click", async () => {
     await navigator.clipboard.writeText(text);
     toast("Round export copied (JSON).");
   }catch(e){
-    toast("Clipboard blocked. (Tip: use HTTPS) — export printed in console.");
     console.log(text);
+    toast("Clipboard blocked — export printed to console.");
   }
 });
+
+/* ===========================
+   ZOOM + PAN (SVG viewBox)
+=========================== */
+let vb = { x:0, y:0, w:1200, h:860 };
+function applyViewBox(){
+  svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+}
+function resetView(){
+  vb = { x:0, y:0, w:1200, h:860 };
+  applyViewBox();
+}
+resetView();
+
+function svgPointFromClient(clientX, clientY){
+  const rect = svg.getBoundingClientRect();
+  const px = (clientX - rect.left) / rect.width;
+  const py = (clientY - rect.top) / rect.height;
+  return { x: vb.x + px*vb.w, y: vb.y + py*vb.h };
+}
+
+let isDragging = false;
+let dragStart = null;
+let vbStart = null;
+
+svg.addEventListener("mousedown", (e) => {
+  // don’t start panning when clicking on a token/hex click handlers already stopPropagation
+  isDragging = true;
+  svg.classList.add("dragging");
+  dragStart = svgPointFromClient(e.clientX, e.clientY);
+  vbStart = { ...vb };
+});
+
+window.addEventListener("mousemove", (e) => {
+  if(!isDragging) return;
+  const cur = svgPointFromClient(e.clientX, e.clientY);
+  const dx = cur.x - dragStart.x;
+  const dy = cur.y - dragStart.y;
+  vb.x = vbStart.x - dx;
+  vb.y = vbStart.y - dy;
+  applyViewBox();
+});
+
+window.addEventListener("mouseup", () => {
+  if(!isDragging) return;
+  isDragging = false;
+  svg.classList.remove("dragging");
+});
+
+svg.addEventListener("wheel", (e) => {
+  e.preventDefault();
+
+  const zoomIntensity = 0.12;
+  const delta = Math.sign(e.deltaY);
+  const factor = 1 + (delta * zoomIntensity);
+
+  const mouse = svgPointFromClient(e.clientX, e.clientY);
+
+  // clamp zoom
+  const newW = vb.w * factor;
+  const newH = vb.h * factor;
+
+  const minW = 420;   // max zoom in
+  const maxW = 2400;  // max zoom out
+
+  if(newW < minW || newW > maxW) return;
+
+  // zoom toward cursor
+  const rx = (mouse.x - vb.x) / vb.w;
+  const ry = (mouse.y - vb.y) / vb.h;
+
+  vb.x = mouse.x - rx * newW;
+  vb.y = mouse.y - ry * newH;
+  vb.w = newW;
+  vb.h = newH;
+
+  applyViewBox();
+}, { passive:false });
 
 /* ===========================
    INIT
@@ -1441,7 +1443,7 @@ function init(){
   generateHexes();
   placeTokens();
   renderAll();
-  toast("Ready: select a token, roll move, click a destination.");
+  toast("Ready. Zoom/pan the map, then start moving tokens.");
 }
 init();
 </script>
