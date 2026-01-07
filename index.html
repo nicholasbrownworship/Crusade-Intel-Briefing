@@ -35,19 +35,7 @@
         radial-gradient(800px 500px at 80% 30%, rgba(209,161,75,0.10), transparent 55%),
         radial-gradient(900px 700px at 50% 120%, rgba(63,191,127,0.10), transparent 60%),
         linear-gradient(180deg, var(--bg0), var(--bg1) 40%, var(--bg0));
-      padding:18px;
-    }
-
-    .app{
-      width:min(1420px, 100%);
-      margin:0 auto;
-      display:grid;
-      grid-template-columns: 420px 1fr;
-      gap:16px;
-      align-items:start;
-    }
-    @media (max-width: 1160px){
-      .app{ grid-template-columns: 1fr; }
+      padding:14px;
     }
 
     .panel{
@@ -58,33 +46,45 @@
       overflow:hidden;
     }
 
-    .p-head{
-      padding:14px 16px;
-      border-bottom:1px solid var(--stroke);
+    /* ===== Top bar ===== */
+    .topbar{
       display:flex;
+      align-items:center;
       justify-content:space-between;
-      align-items:flex-start;
       gap:12px;
+      padding:12px 14px;
+      margin-bottom:12px;
     }
-    .p-head h1{
-      margin:0;
-      font-size:14px;
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width: 0;
+    }
+    .brand .t{
+      font-size:13px;
       letter-spacing:0.16em;
       text-transform:uppercase;
+      margin:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-    .p-sub{
-      margin-top:6px;
+    .brand .s{
       color:var(--muted);
       font-size:12px;
-      line-height:1.45;
+      line-height:1.3;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-
-    .btnrow{
+    .topActions{
       display:flex;
-      flex-wrap:wrap;
       gap:8px;
+      flex-wrap:wrap;
       justify-content:flex-end;
     }
+
     button{
       appearance:none;
       border:1px solid rgba(255,255,255,0.14);
@@ -127,17 +127,70 @@
       transform:none;
     }
 
-    .p-body{ padding:14px 16px; }
+    /* ===== Main layout ===== */
+    .layout{
+      width:min(1600px, 100%);
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 360px 1fr 360px;
+      gap:12px;
+      align-items:stretch;
+    }
+    @media (max-width: 1220px){
+      .layout{ grid-template-columns: 1fr; }
+      .col{ min-height: unset; }
+      svg{ height: min(66vh, 860px) !important; }
+    }
+
+    .col{
+      display:flex;
+      flex-direction:column;
+      min-height: calc(100vh - 14px - 14px - 12px - 12px);
+    }
+
+    /* ===== Tabs ===== */
+    .tabs{
+      display:flex;
+      gap:6px;
+      padding:10px 10px;
+      border-bottom:1px solid var(--stroke);
+      background: rgba(0,0,0,0.12);
+    }
+    .tab{
+      flex:1 1 auto;
+      text-align:center;
+      padding:8px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color:var(--muted);
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      user-select:none;
+    }
+    .tab.active{
+      color: var(--ink);
+      border-color: rgba(74,166,255,0.35);
+      background: rgba(74,166,255,0.10);
+      box-shadow: 0 0 0 2px rgba(74,166,255,0.10) inset;
+    }
+    .tabContent{
+      padding:12px 12px;
+      overflow:auto;
+    }
 
     .section{
       margin-top:12px;
-      border-top:1px solid var(--stroke);
       padding-top:12px;
+      border-top:1px solid var(--stroke);
     }
     .section:first-child{
       margin-top:0;
-      border-top:none;
       padding-top:0;
+      border-top:none;
     }
     .section h2{
       margin:0 0 8px 0;
@@ -146,6 +199,13 @@
       text-transform:uppercase;
       color:var(--muted);
     }
+
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
 
     .kv{
       display:grid;
@@ -156,8 +216,8 @@
       border:1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.22);
       border-radius: 14px;
-      padding:8px 10px;
-      min-height: 54px;
+      padding:10px 10px;
+      min-height: 56px;
     }
     .k{
       font-size:11px;
@@ -166,14 +226,78 @@
       color:var(--muted);
     }
     .v{
-      margin-top:6px;
+      margin-top:7px;
       font-weight:900;
       font-size:13px;
       line-height:1.25;
     }
 
-    .list{ display:grid; gap:8px; }
+    .stepper{
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.22);
+      border-radius: 14px;
+      padding:10px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+    .step{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .chk{
+      width:16px; height:16px;
+      border-radius:6px;
+      border:1px solid rgba(255,255,255,0.18);
+      display:grid;
+      place-items:center;
+      color: rgba(255,255,255,0.78);
+      font-size:11px;
+      flex:0 0 auto;
+      background: rgba(255,255,255,0.04);
+    }
+    .chk.on{
+      border-color: rgba(63,191,127,0.38);
+      background: rgba(63,191,127,0.10);
+      color:#d9fff0;
+    }
 
+    .bigMove{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.22);
+      border-radius: 14px;
+      padding:10px 10px;
+      margin-top:10px;
+    }
+    .bigMove .label{
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:0.10em;
+      text-transform:uppercase;
+    }
+    .bigMove .num{
+      font-weight:1000;
+      font-size:20px;
+      letter-spacing:0.02em;
+    }
+
+    .rowBtns{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    /* token cards */
+    .list{ display:grid; gap:8px; }
     .tokenCard{
       border:1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.22);
@@ -231,6 +355,7 @@
     .badge.red{ border-color: rgba(204,59,59,0.35); color:#ffd6d6; }
     .badge.gold{ border-color: rgba(209,161,75,0.40); color:#f2e6cf; }
 
+    /* intel logs */
     .log{
       border:1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.22);
@@ -239,18 +364,12 @@
       color: var(--ink);
       font-size:12px;
       line-height:1.5;
-      max-height: 220px;
+      max-height: 380px;
       overflow:auto;
       white-space:pre-wrap;
     }
 
-    .hint{
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.5;
-    }
-
-    /* Star control list */
+    /* star list */
     .starList{ display:grid; gap:8px; }
     .starRow{
       border:1px solid rgba(255,255,255,0.12);
@@ -262,8 +381,7 @@
       align-items:flex-start;
     }
     .starIcon{
-      width:28px;
-      height:28px;
+      width:28px; height:28px;
       border-radius: 10px;
       display:grid;
       place-items:center;
@@ -296,42 +414,48 @@
       letter-spacing:0.02em;
     }
 
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-
     /* Map */
-    .mapWrap{
-      position:relative;
-      padding:10px;
+    .mapPanel{
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
     }
-    .mapTop{
-      padding:14px 16px;
+    .mapHeader{
+      padding:12px 14px;
       border-bottom:1px solid var(--stroke);
       display:flex;
       justify-content:space-between;
       gap:12px;
       align-items:center;
     }
-    .mapTop .title{
-      display:flex; flex-direction:column; gap:6px;
+    .mapHeader .left{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width: 0;
     }
-    .mapTop .title .big{
-      margin:0;
-      font-size:14px;
+    .mapHeader .left .big{
+      font-size:13px;
       letter-spacing:0.16em;
       text-transform:uppercase;
+      margin:0;
     }
-    .mapTop .title .small{
+    .mapHeader .left .small{
       color:var(--muted);
       font-size:12px;
-      line-height:1.4;
-    }
-    .mapTools{
-      display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+      line-height:1.3;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
+    .mapWrap{
+      position:relative;
+      padding:10px;
+    }
     svg{
       width:100%;
-      height:min(74vh, 860px);
+      height:min(76vh, 900px);
       display:block;
       background: radial-gradient(700px 480px at 40% 30%, rgba(255,255,255,0.06), transparent 60%);
       border-radius: 14px;
@@ -339,26 +463,6 @@
       cursor: grab;
     }
     svg.dragging{ cursor: grabbing; }
-
-    .legend{
-      padding:12px 16px;
-      border-top:1px solid var(--stroke);
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      align-items:center;
-      color:var(--muted);
-      font-size:12px;
-    }
-    .dot{
-      width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:6px;
-      border:1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.12);
-      transform: translateY(1px);
-    }
-    .dot.i{ background: rgba(74,166,255,0.25); border-color: rgba(74,166,255,0.45); }
-    .dot.x{ background: rgba(63,191,127,0.25); border-color: rgba(63,191,127,0.45); }
-    .dot.c{ background: rgba(204,59,59,0.25); border-color: rgba(204,59,59,0.45); }
 
     .toast{
       position:absolute;
@@ -371,7 +475,7 @@
       color: var(--ink);
       font-size:12px;
       line-height:1.4;
-      max-width: 620px;
+      max-width: 640px;
       opacity:0;
       transform: translateY(6px);
       transition: opacity .18s ease, transform .18s ease;
@@ -379,32 +483,65 @@
       box-shadow: var(--shadow);
       white-space:pre-wrap;
     }
-    .toast.show{
-      opacity:1;
-      transform: translateY(0);
+    .toast.show{ opacity:1; transform: translateY(0); }
+
+    .footerHint{
+      padding:10px 14px;
+      border-top:1px solid var(--stroke);
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
     }
+    .dot{
+      width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:6px;
+      border:1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.12);
+      transform: translateY(1px);
+    }
+    .dot.i{ background: rgba(74,166,255,0.25); border-color: rgba(74,166,255,0.45); }
+    .dot.x{ background: rgba(63,191,127,0.25); border-color: rgba(63,191,127,0.45); }
+    .dot.c{ background: rgba(204,59,59,0.25); border-color: rgba(204,59,59,0.45); }
   </style>
 </head>
 <body>
-  <div class="app">
-    <!-- LEFT -->
-    <div class="panel">
-      <div class="p-head">
-        <div>
-          <h1>Crusade Round Kit</h1>
-          <div class="p-sub">
-            Strategic rumors: enemy within <span class="mono">4</span> hexes (no LOS). Tactical matchups: enemy within <span class="mono">2</span> hexes + LOS (locks a game).
-          </div>
-        </div>
-        <div class="btnrow">
-          <button id="btnNewRound" class="primary" type="button">New Round</button>
-          <button id="btnResetMap" class="danger" type="button">Reset Map</button>
-        </div>
+
+  <!-- TOP BAR -->
+  <div class="panel topbar">
+    <div class="brand">
+      <div class="t">Crusade Campaign Kit</div>
+      <div class="s" id="topHint">Select a token → Roll move → Click a highlighted hex. Tactical matchups lock when enemy is within 2 + LOS.</div>
+    </div>
+    <div class="topActions">
+      <button id="btnNewRound" class="primary" type="button">New Round</button>
+      <button id="btnRegenTerrain" type="button">Randomize Terrain</button>
+      <button id="btnCenter" type="button">Center View</button>
+      <button id="btnExport" type="button">Copy Round Export</button>
+      <button id="btnResetMap" class="danger" type="button">Reset Map</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- ACTIONS (LEFT) -->
+    <div class="panel col">
+      <div class="tabs">
+        <div class="tab active" data-tab="actionsTokens">Tokens</div>
+        <div class="tab" data-tab="actionsMove">Movement</div>
       </div>
 
-      <div class="p-body">
+      <div class="tabContent" id="actionsTokens">
         <div class="section">
-          <h2>Selected Token</h2>
+          <h2>Tokens</h2>
+          <div class="hint" style="margin-bottom:8px;">
+            Click a token card (or the token on the map) to select it.
+          </div>
+          <div class="list" id="tokenList"></div>
+        </div>
+
+        <div class="section">
+          <h2>Selected</h2>
           <div class="kv">
             <div class="pill">
               <div class="k">Faction</div>
@@ -423,29 +560,29 @@
               <div class="v" id="selStatus">—</div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <div class="tabContent" id="actionsMove" style="display:none;">
+        <div class="section">
+          <h2>Move Flow</h2>
+          <div class="stepper">
+            <div class="step"><span class="chk" id="chk1">1</span> Select a token</div>
+            <div class="step"><span class="chk" id="chk2">2</span> Roll movement</div>
+            <div class="step"><span class="chk" id="chk3">3</span> Click a highlighted hex</div>
+          </div>
+
+          <div class="bigMove">
+            <div>
+              <div class="label">Move Points</div>
+              <div class="hint">d3 + team bonus</div>
+            </div>
+            <div class="num mono" id="selMoveBig">—</div>
+          </div>
+
+          <div class="rowBtns">
             <button id="btnRollMove" class="primary" type="button">Roll Move</button>
             <button id="btnClearMove" type="button">Clear Move</button>
-          </div>
-
-          <div class="hint" style="margin-top:10px;">
-            <div><strong>Movement:</strong> after you roll, reachable hexes are highlighted. Hover a hex to preview distance + path.</div>
-            <div style="margin-top:6px;"><strong>Team benefits:</strong></div>
-            <div>• <span class="mono">Imperium</span>: +1 move</div>
-            <div>• <span class="mono">Xenos</span>: minimum roll is 2</div>
-            <div>• <span class="mono">Chaos</span>: +1 effective move if destination is closer to nearest enemy than your start</div>
-          </div>
-
-          <div class="kv" style="margin-top:10px;">
-            <div class="pill">
-              <div class="k">Move Points</div>
-              <div class="v" id="selMove">—</div>
-            </div>
-            <div class="pill">
-              <div class="k">Hover / Path</div>
-              <div class="v mono" id="selHover">—</div>
-            </div>
           </div>
 
           <div class="kv" style="margin-top:10px;">
@@ -454,62 +591,87 @@
               <div class="v mono" id="selDest">—</div>
             </div>
             <div class="pill">
-              <div class="k">Reachable Hexes</div>
+              <div class="k">Reachable</div>
               <div class="v" id="selReachCount">—</div>
             </div>
           </div>
-        </div>
 
-        <div class="section">
-          <h2>Star Sites Control</h2>
-          <div class="hint" style="margin-bottom:8px;">
-            A ★ site is controlled by the team with a token <span class="mono">on the hex</span>. If multiple teams share the hex, it becomes <span class="mono">Contested</span>.
+          <div class="pill" style="margin-top:10px;">
+            <div class="k">Hover / Path</div>
+            <div class="v mono" id="selHover">—</div>
           </div>
-          <div class="starList" id="starList"></div>
-        </div>
 
-        <div class="section">
-          <h2>Tokens (8)</h2>
-          <div class="list" id="tokenList"></div>
-        </div>
-
-        <div class="section">
-          <h2>Strategic Rumors</h2>
-          <div class="log" id="logStrategic"></div>
-        </div>
-
-        <div class="section">
-          <h2>Tactical Matchups (Locked)</h2>
-          <div class="log" id="logTactical"></div>
+          <div class="section">
+            <h2>Team Benefits</h2>
+            <div class="hint">
+              • <span class="mono">Imperium</span>: +1 move<br/>
+              • <span class="mono">Xenos</span>: minimum roll is 2<br/>
+              • <span class="mono">Chaos</span>: +1 effective move if destination is closer to nearest enemy than your start
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT -->
-    <div class="panel">
-      <div class="mapTop">
-        <div class="title">
+    <!-- MAP (CENTER) -->
+    <div class="panel mapPanel col">
+      <div class="mapHeader">
+        <div class="left">
           <div class="big">Hex Map</div>
-          <div class="small">Mouse wheel: zoom • Click-drag: pan • Click token to select • Roll move, then click a highlighted hex.</div>
+          <div class="small">Wheel zoom • Drag pan • Click token to select • Roll move then click highlighted hex</div>
         </div>
-        <div class="mapTools">
-          <button id="btnRegenTerrain" type="button">Randomize Terrain</button>
-          <button id="btnCenter" type="button">Center</button>
-          <button id="btnExport" type="button">Copy Round Export</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+          <button id="btnFocusSelected" type="button">Focus Selected</button>
         </div>
       </div>
-
       <div class="mapWrap">
         <svg id="svg" viewBox="0 0 1200 860" aria-label="Hex map"></svg>
         <div class="toast" id="toast"></div>
       </div>
-
-      <div class="legend">
+      <div class="footerHint">
         <span><span class="dot i"></span>Imperium</span>
         <span><span class="dot.x"></span>Xenos</span>
         <span><span class="dot.c"></span>Chaos</span>
-        <span>• Highlighted hexes = reachable this move</span>
         <span>• ★ important site • <span class="mono">JAM</span> blocks LOS • <span class="mono">X</span> blocks movement</span>
+      </div>
+    </div>
+
+    <!-- INTEL (RIGHT) -->
+    <div class="panel col">
+      <div class="tabs">
+        <div class="tab active" data-tab="intelStars">Star Sites</div>
+        <div class="tab" data-tab="intelRumors">Rumors</div>
+        <div class="tab" data-tab="intelMatchups">Matchups</div>
+      </div>
+
+      <div class="tabContent" id="intelStars">
+        <div class="section">
+          <h2>Star Sites Control</h2>
+          <div class="hint" style="margin-bottom:8px;">
+            A ★ site is controlled by the team with a token on the hex. Multiple teams = Contested.
+          </div>
+          <div class="starList" id="starList"></div>
+        </div>
+      </div>
+
+      <div class="tabContent" id="intelRumors" style="display:none;">
+        <div class="section">
+          <h2>Strategic Rumors</h2>
+          <div class="hint" style="margin-bottom:8px;">
+            Generated when an enemy is within <span class="mono">4</span> hexes (LOS not required).
+          </div>
+          <div class="log" id="logStrategic"></div>
+        </div>
+      </div>
+
+      <div class="tabContent" id="intelMatchups" style="display:none;">
+        <div class="section">
+          <h2>Tactical Matchups (Locked)</h2>
+          <div class="hint" style="margin-bottom:8px;">
+            Locks when an enemy is within <span class="mono">2</span> hexes <em>and</em> LOS is clear.
+          </div>
+          <div class="log" id="logTactical"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -544,7 +706,7 @@ const HEX_SIZE = 34;
 const GRID_RADIUS = 7;
 const CENTER = { x: 600, y: 430 };
 
-/* Terrain readability: subtle chip colors */
+/* Terrain chip colors */
 const BIOME_CHIP = {
   plains:   { dot:"rgba(255,255,255,0.55)", text:"rgba(255,255,255,0.80)" },
   forest:   { dot:"rgba(63,191,127,0.72)",  text:"rgba(63,191,127,0.94)"  },
@@ -581,7 +743,6 @@ const IMPORTANT_TYPES = [
   { id:"data_vault",    label:"Data Vault",     weight: 12 }
 ];
 
-/* Why ★ matters (value + hook) */
 const IMPORTANT_VALUE = {
   spaceport: [
     { tag:"PORT", value:"Rapid deployment corridor", hook:"A functioning landing field changes the entire front." },
@@ -627,14 +788,12 @@ let strategicRumors = [];
 let tacticalMatchups = [];
 let seenStrategicPairs = new Set();
 
-// Movement UX state
-let reachable = new Map();      // key -> distance
+let reachable = new Map();
 let reachableOrder = [];
 let hoverKey = null;
 let hoverPath = [];
 let hoverDistance = null;
 
-/* Star control state: key -> {owner: team|null|"Contested"} */
 let starControl = new Map();
 
 /* ===========================
@@ -771,7 +930,6 @@ function generateHexes(){
     };
   }
 
-  // Reset star control (recomputed on render)
   starControl = new Map();
 }
 
@@ -867,10 +1025,7 @@ function nearestEnemyDistance(tokenId, q, r){
 
 function rollMoveFor(token){
   if(!token) return;
-  if(token.status !== "available"){
-    toast("This token is engaged (already matched).");
-    return;
-  }
+  if(token.status !== "available"){ toast("This token is engaged (already matched)."); return; }
 
   const roll = d3();
   let move = roll;
@@ -884,7 +1039,7 @@ function rollMoveFor(token){
   plannedDestKey = null;
 
   computeReachableForSelected();
-  toast(`Move rolled for ${token.faction}: d3=${roll} → Move=${move} (reachable highlighted)`);
+  toast(`Move rolled for ${token.faction}: d3=${roll} → Move=${move}`);
 }
 
 function chaosEffectiveMove(token, destKey){
@@ -945,13 +1100,10 @@ function computeReachableForSelected(){
   const startKey = keyOf(tok.q, tok.r);
 
   reachable = new Map();
-  reachableOrder = [];
-
   const base = tok.movePoints;
 
   const baseRes = bfsReachable(startKey, base);
   for(const [k,d] of baseRes.dist.entries()) reachable.set(k, d);
-
   tok._parentBase = baseRes.parent;
 
   if(tok.team === TEAM.CHAOS){
@@ -970,20 +1122,18 @@ function computeReachableForSelected(){
     tok._bonusOnly = new Set();
   }
 
-  reachableOrder = [...reachable.entries()].sort((a,b)=>a[1]-b[1]).map(x=>x[0]);
   $("selReachCount").textContent = `${reachable.size} hexes`;
-  renderAll();
 }
 
 function clearMovementUX(){
   reachable = new Map();
-  reachableOrder = [];
   hoverKey = null;
   hoverPath = [];
   hoverDistance = null;
   plannedDestKey = null;
   $("selReachCount").textContent = "—";
   $("selHover").textContent = "—";
+  $("selDest").textContent = "—";
 }
 
 function reconstructPath(parentMap, startKey, endKey){
@@ -1002,7 +1152,6 @@ function reconstructPath(parentMap, startKey, endKey){
 /* ===========================
    STAR CONTROL
 =========================== */
-/* Rule: controlled by team with token on the site hex. If multiple teams occupy, Contested. */
 function computeStarControl(){
   starControl = new Map();
   for(const [k,h] of hexes.entries()){
@@ -1028,17 +1177,10 @@ function renderStarControl(){
   const stars = [...hexes.entries()]
     .filter(([k,h]) => h.important)
     .map(([k,h]) => ({ key:k, hex:h, ctl: starControl.get(k) }))
-    .sort((a,b) => {
-      const ai = a.hex.important.importance || 0;
-      const bi = b.hex.important.importance || 0;
-      return bi - ai;
-    });
+    .sort((a,b) => (b.hex.important.importance||0) - (a.hex.important.importance||0));
 
-  if(stars.length === 0){
-    const empty = document.createElement("div");
-    empty.className = "hint";
-    empty.textContent = "No star sites generated yet.";
-    list.appendChild(empty);
+  if(!stars.length){
+    list.textContent = "—";
     return;
   }
 
@@ -1094,7 +1236,7 @@ function renderStarControl(){
 }
 
 /* ===========================
-   RUMORS (same rules, but now uses site value/hook in flavor)
+   RUMORS
 =========================== */
 const STRATEGIC_TEMPLATES = [
   "Long-range augurs register hostile movement near {place}. No visual confirmation. Indicators suggest {theme}.",
@@ -1307,7 +1449,7 @@ function drawHexes(){
 
     const c = axialToPixel(h.q,h.r);
 
-    // Subtle terrain chip (top-left)
+    // Terrain chip (top-left)
     const chipStyle = BIOME_CHIP[h.biome.id] || BIOME_CHIP.plains;
     const chip = document.createElementNS(svgNS, "g");
     chip.setAttribute("pointer-events", "none");
@@ -1344,7 +1486,7 @@ function drawHexes(){
 
     svg.appendChild(chip);
 
-    // Coordinate label (smaller + dimmer)
+    // coords (dim)
     const label = document.createElementNS(svgNS, "text");
     label.setAttribute("x", c.x);
     label.setAttribute("y", c.y + 18);
@@ -1356,7 +1498,7 @@ function drawHexes(){
     label.textContent = `${h.q},${h.r}`;
     svg.appendChild(label);
 
-    // ★ Important site
+    // ★ + tag + control ring
     if(h.important){
       const star = document.createElementNS(svgNS, "text");
       star.setAttribute("x", c.x);
@@ -1368,7 +1510,6 @@ function drawHexes(){
       star.textContent = "★";
       svg.appendChild(star);
 
-      // Site tag
       const tag = document.createElementNS(svgNS, "text");
       tag.setAttribute("x", c.x);
       tag.setAttribute("y", c.y - 2);
@@ -1380,7 +1521,6 @@ function drawHexes(){
       tag.textContent = h.important.tag;
       svg.appendChild(tag);
 
-      // Controlled-by ring (subtle)
       const ctl = starControl.get(k)?.owner ?? null;
       if(ctl){
         const ring = document.createElementNS(svgNS, "circle");
@@ -1401,7 +1541,6 @@ function drawHexes(){
       }
     }
 
-    // Special markers
     if(h.special?.id === "blackout"){
       const t = document.createElementNS(svgNS, "text");
       t.setAttribute("x", c.x + 22);
@@ -1542,7 +1681,7 @@ function drawTokens(){
 }
 
 function renderMap(){
-  computeStarControl(); // ensure starControl is fresh before drawing rings
+  computeStarControl();
   clearSVG();
   drawHexes();
   drawReachableOverlay();
@@ -1585,26 +1724,6 @@ function renderTokenList(){
   }
 }
 
-function renderSelected(){
-  const tok = getSelectedToken();
-  $("selFaction").textContent = tok ? tok.faction : "—";
-  $("selTeam").textContent = tok ? tok.team : "—";
-  $("selHex").textContent = tok ? `${tok.q},${tok.r}` : "—";
-  $("selStatus").textContent = tok ? tok.status : "—";
-  $("selMove").textContent = tok && tok.movePoints != null ? String(tok.movePoints) : "—";
-  $("selDest").textContent = plannedDestKey || "—";
-
-  // default hover
-  if(!hoverKey){
-    $("selHover").textContent = "—";
-  }
-
-  $("btnRollMove").disabled = !tok || tok.status!=="available";
-  $("btnClearMove").disabled = !tok;
-
-  $("selReachCount").textContent = reachable.size ? `${reachable.size} hexes` : "—";
-}
-
 function renderLogs(){
   const s = strategicRumors.map(r => {
     const a = tokens.find(t=>t.id===r.tokenA);
@@ -1626,10 +1745,34 @@ function renderLogs(){
   $("logTactical").textContent = t || "—";
 }
 
+function renderSelected(){
+  const tok = getSelectedToken();
+  $("selFaction").textContent = tok ? tok.faction : "—";
+  $("selTeam").textContent = tok ? tok.team : "—";
+  $("selHex").textContent = tok ? `${tok.q},${tok.r}` : "—";
+  $("selStatus").textContent = tok ? tok.status : "—";
+
+  $("selMoveBig").textContent = tok && tok.movePoints != null ? String(tok.movePoints) : "—";
+  $("selDest").textContent = plannedDestKey || "—";
+  $("selReachCount").textContent = reachable.size ? `${reachable.size} hexes` : "—";
+
+  // stepper checks
+  const hasTok = !!tok;
+  const hasRoll = !!tok && tok.movePoints != null && tok.moveFrom != null;
+  const hasDest = !!plannedDestKey && reachable.has(plannedDestKey);
+
+  $("chk1").classList.toggle("on", hasTok);
+  $("chk2").classList.toggle("on", hasRoll);
+  $("chk3").classList.toggle("on", hasDest);
+
+  $("btnRollMove").disabled = !tok || tok.status!=="available";
+  $("btnClearMove").disabled = !tok;
+}
+
 function renderAll(){
-  renderStarControl();
   renderTokenList();
   renderSelected();
+  renderStarControl();
   renderLogs();
   renderMap();
 }
@@ -1653,22 +1796,18 @@ function onHexHover(hexKey){
 
   const h = hexes.get(hexKey);
   const parts = [];
-
   if(h){
-    // terrain / special quick read
     let terrainLine = h.biome.label;
     if(h.special?.id === "blackout") terrainLine += " • JAM";
     if(h.special?.id === "exclusion") terrainLine += " • X";
     parts.push(terrainLine);
 
-    // star site info
     if(h.important){
       parts.push(`★ ${h.important.label} (${h.important.tag})`);
       parts.push(h.important.value);
     }
   }
 
-  // movement hover preview
   const tok = getSelectedToken();
   if(tok && tok.movePoints != null && tok.moveFrom){
     const startKey = keyOf(tok.q, tok.r);
@@ -1680,7 +1819,6 @@ function onHexHover(hexKey){
         parent = tok._parentBonus || tok._parentBase;
       }
       hoverPath = reconstructPath(parent, startKey, hexKey);
-
       parts.push(`Dist ${hoverDistance}`);
     }else{
       hoverDistance = null;
@@ -1703,12 +1841,15 @@ function onHexClicked(hexKey){
 
   if(tok.movePoints == null || !tok.moveFrom){
     toast("Destination selected. Roll movement to execute a move.");
-    renderAll();
+    renderSelected();
+    renderMap();
     return;
   }
 
   if(!reachable.has(hexKey)){
     toast("Not reachable this move (must be highlighted).");
+    renderSelected();
+    renderMap();
     return;
   }
 
@@ -1717,6 +1858,8 @@ function onHexClicked(hexKey){
     const dist = reachable.get(hexKey);
     if(dist > eff){
       toast("Chaos bonus not active for that destination (must move closer to nearest enemy).");
+      renderSelected();
+      renderMap();
       return;
     }
   }
@@ -1729,7 +1872,6 @@ function onHexClicked(hexKey){
   tok.moveFrom = null;
 
   clearMovementUX();
-
   checkRumorsAfterMove(tok);
   renderAll();
 }
@@ -1786,8 +1928,6 @@ $("btnResetMap").addEventListener("click", () => {
 
 $("btnRegenTerrain").addEventListener("click", () => {
   generateHexes();
-
-  // keep token positions but nudge off blocked
   for(const tok of tokens){
     const k = keyOf(tok.q,tok.r);
     const h = hexes.get(k);
@@ -1803,15 +1943,17 @@ $("btnRegenTerrain").addEventListener("click", () => {
       if(!moved){ tok.q=0; tok.r=0; }
     }
   }
-
   computeReachableForSelected();
   toast("Terrain randomized (tokens preserved).");
   renderAll();
 });
 
-$("btnCenter").addEventListener("click", () => {
-  resetView();
-  toast("View centered.");
+$("btnCenter").addEventListener("click", () => { resetView(); toast("View centered."); });
+$("btnFocusSelected").addEventListener("click", () => {
+  const tok = getSelectedToken();
+  if(!tok) return;
+  focusOnHex(keyOf(tok.q,tok.r));
+  toast("Focused on selected token.");
 });
 
 $("btnExport").addEventListener("click", async () => {
@@ -1833,6 +1975,31 @@ $("btnExport").addEventListener("click", async () => {
     toast("Clipboard blocked — export printed to console.");
   }
 });
+
+/* ===========================
+   TABS
+=========================== */
+function setupTabs(){
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => {
+    t.addEventListener("click", () => {
+      const target = t.getAttribute("data-tab");
+
+      const container = t.closest(".panel");
+      const siblingTabs = container.querySelectorAll(".tab");
+      siblingTabs.forEach(st => st.classList.remove("active"));
+      t.classList.add("active");
+
+      // hide all contents in this panel
+      const contents = container.querySelectorAll(".tabContent");
+      contents.forEach(c => c.style.display = "none");
+
+      // show target
+      const el = document.getElementById(target);
+      if(el) el.style.display = "";
+    });
+  });
+}
 
 /* ===========================
    ZOOM + PAN (SVG viewBox)
@@ -1898,14 +2065,25 @@ svg.addEventListener("wheel", (e) => {
   applyViewBox();
 }, { passive:false });
 
+function focusOnHex(hexKey){
+  const h = hexes.get(hexKey);
+  if(!h) return;
+  const c = axialToPixel(h.q,h.r);
+  // Keep zoom, just pan center
+  vb.x = c.x - vb.w/2;
+  vb.y = c.y - vb.h/2;
+  applyViewBox();
+}
+
 /* ===========================
    INIT
 =========================== */
 function init(){
+  setupTabs();
   generateHexes();
   placeTokens();
   renderAll();
-  toast("Ready. Terrain chips + star-site values enabled. Star control updates automatically.");
+  toast("UI reorganized: Actions (left), Map (center), Intel (right).");
 }
 init();
 </script>
