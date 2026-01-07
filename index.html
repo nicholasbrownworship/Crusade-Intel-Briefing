@@ -209,6 +209,16 @@
         <p class="text" id="body">Click “Generate Briefing” to produce an intel card.</p>
 
         <div class="meta">
+          
+          <div class="kv">
+          <div class="k">Subject Faction</div>
+          <div class="v" id="subjectFaction">—</div>
+          </div>
+          <div class="kv">
+          <div class="k">Reporting Faction</div>
+          <div class="v" id="reportingFaction">—</div>
+          </div>
+
           <div class="kv">
             <div class="k">Source</div>
             <div class="v" id="source">—</div>
@@ -263,6 +273,19 @@
     { name:"Enemy Activity", cls:"red" },
     { name:"Internal Risks", cls:"green" }
   ];
+  
+  const factions = [
+  "Adeptus Astartes",
+  "Astra Militarum",
+  "Adeptus Mechanicus",
+  "Chaos Warband",
+  "Xenos Incursion",
+  "Unknown Renegades",
+  "Planetary Defense Force",
+  "Inquisition Cell",
+  "Merchant Cartel",
+  "Civilian Uprising"
+];
 
   const confidence = [
     { name:"High", cls:"green" },
@@ -338,6 +361,13 @@
     const tag = pick(tags);
     const assess = pick(assessments);
     const act = pick(actions);
+    const subjectFaction = pick(factions);
+    const reportingFaction = pick(factions);
+    
+    document.getElementById("subjectFaction").textContent = subjectFaction;
+    document.getElementById("reportingFaction").textContent = reportingFaction;
+
+
 
     const ref = `BX-${nowCode()}-${id4()}`;
 
@@ -368,46 +398,57 @@
 
     // Export text
     const exportBox = document.getElementById("export");
-    exportBox.value =
-`[CRUSADE INTEL BRIEFING]
-Ref: ${ref}
-Category: ${cat.name}
-Confidence: ${conf.name}
-Tag: ${tag}
-Source: ${src}
-Assessment: ${assess}
-Recommended Action: ${act}
+   exportBox.value =
+`════════════════════════════════════
+CRUSADE INTELLIGENCE BRIEFING
+════════════════════════════════════
+
+REFERENCE CODE
+${ref}
+
+CLASSIFICATION
+Field Intelligence — Distribution Authorized
+
+PRIMARY SUBJECT
+Faction: ${subjectFaction}
+
+REPORTING AUTHORITY
+Faction: ${reportingFaction}
+
+INTELLIGENCE CATEGORY
+${cat.name}
+
+CONFIDENCE LEVEL
+${conf.name}
+
+SOURCE ORIGIN
+${src}
+
+ASSESSMENT
+${assess}
+
+RECOMMENDED ACTION
+${act}
+
+INTEL TAG
+${tag}
+
+════════════════════════════════════
+SUMMARY
+════════════════════════════════════
 
 ${ttl}
+
 ${body}
 
-(Truth status intentionally unverified: may be true/false/partial/propaganda.)`;
-  }
+════════════════════════════════════
+NOTES
+════════════════════════════════════
+Truth status remains unverified. This briefing may represent
+accurate intelligence, partial truth, deliberate misinformation,
+or enemy propaganda. Command discretion is advised.
+`;
 
-  async function copyText(text){
-    try{
-      await navigator.clipboard.writeText(text);
-    }catch(e){
-      // fallback
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-    }
-  }
-
-  document.getElementById("btnGen").addEventListener("click", renderBriefing);
-  document.getElementById("btnGen2").addEventListener("click", renderBriefing);
-
-  document.getElementById("btnCopy").addEventListener("click", () => {
-    const t = document.getElementById("export").value || document.getElementById("body").textContent;
-    copyText(t);
-  });
-  document.getElementById("btnCopy2").addEventListener("click", () => {
-    copyText(document.getElementById("export").value);
-  });
 
   // Generate one immediately so the page isn't empty
   renderBriefing();
