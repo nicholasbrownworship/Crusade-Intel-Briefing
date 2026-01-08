@@ -47,7 +47,6 @@
       overflow:hidden;
     }
 
-    /* ===== Layout ===== */
     .app{
       width:min(1680px, 100%);
       margin:0 auto;
@@ -61,7 +60,6 @@
       .mapPanel svg{ height: min(70vh, 920px) !important; }
     }
 
-    /* ===== Shared typography ===== */
     .title{
       font-size:12px;
       letter-spacing:0.16em;
@@ -83,7 +81,6 @@
     }
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
 
-    /* ===== Buttons ===== */
     button{
       appearance:none;
       border:1px solid rgba(255,255,255,0.14);
@@ -118,7 +115,6 @@
       transform:none;
     }
 
-    /* ===== Cards/blocks ===== */
     .pad{ padding:12px 12px; }
     .section{ padding:12px 12px; border-top:1px solid rgba(255,255,255,0.10); }
     .section:first-child{ border-top:none; }
@@ -132,7 +128,7 @@
       padding:10px 10px;
     }
 
-    /* ===== Player HUD ===== */
+    /* Player HUD */
     .hudHeader{
       padding:14px 14px;
       border-bottom:1px solid rgba(255,255,255,0.10);
@@ -140,7 +136,6 @@
       flex-direction:column;
       gap:6px;
     }
-
     label{
       color:var(--muted);
       font-size:11px;
@@ -164,7 +159,6 @@
       border-color: rgba(74,166,255,0.45);
       box-shadow: 0 0 0 2px rgba(74,166,255,0.12);
     }
-
     .moveBig{
       display:flex;
       align-items:center;
@@ -187,13 +181,11 @@
       font-weight:1000;
       letter-spacing:0.02em;
     }
-
     .statusLine{
       color:var(--muted);
       font-size:12px;
       line-height:1.4;
     }
-
     .hintBar{
       border-top:1px solid rgba(255,255,255,0.10);
       padding:10px 12px;
@@ -205,7 +197,7 @@
       align-items:center;
     }
 
-    /* ===== Round Board ===== */
+    /* Round Board */
     .boardHeader{
       padding:14px 14px;
       border-bottom:1px solid rgba(255,255,255,0.10);
@@ -240,6 +232,15 @@
       border-radius: 14px;
       padding:10px 10px;
     }
+    .item.clickable{
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .item.clickable:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.22);
+    }
     .itemTop{
       display:flex;
       justify-content:space-between;
@@ -264,7 +265,6 @@
       margin-top:6px;
     }
 
-    /* Star control list */
     .starIcon{
       width:28px; height:28px;
       border-radius: 10px;
@@ -282,20 +282,62 @@
       align-items:flex-start;
     }
 
-    /* ===== Map Panel ===== */
+    /* Map Panel */
     .mapHeader{
       padding:12px 14px;
       border-bottom:1px solid rgba(255,255,255,0.10);
       display:flex;
       justify-content:space-between;
       gap:12px;
-      align-items:center;
+      align-items:flex-start;
     }
     .mapHeader .left{
       display:flex;
       flex-direction:column;
       gap:6px;
       min-width:0;
+      flex: 1 1 auto;
+    }
+    .mapHeader .right{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+      flex: 0 0 auto;
+    }
+
+    .focusCard{
+      max-width: 520px;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.22);
+      border-radius: 14px;
+      padding:10px 10px;
+    }
+    .focusTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .focusTitle{
+      font-weight:1000;
+      font-size:12px;
+      letter-spacing:0.10em;
+      text-transform:uppercase;
+      color: #f2e6cf;
+    }
+    .focusBody{
+      margin-top:6px;
+      color:var(--ink);
+      font-size:12px;
+      line-height:1.45;
+    }
+    .focusMeta{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:11px;
+      line-height:1.4;
     }
 
     .mapWrap{ position:relative; padding:10px; }
@@ -331,17 +373,9 @@
     }
     .toast.show{ opacity:1; transform: translateY(0); }
 
-    /* ===== GM Drawer ===== */
-    .gmDock{
-      position:sticky;
-      bottom:12px;
-      margin-top:12px;
-    }
-    .gmDrawer{
-      width:min(1680px, 100%);
-      margin:0 auto;
-    }
-    details.gm details-summary { list-style:none; }
+    /* GM Drawer */
+    .gmDock{ position:sticky; bottom:12px; margin-top:12px; }
+    .gmDrawer{ width:min(1680px, 100%); margin:0 auto; }
     details.gm > summary{
       cursor:pointer;
       user-select:none;
@@ -355,6 +389,7 @@
       letter-spacing:0.14em;
       text-transform:uppercase;
       font-size:11px;
+      list-style:none;
     }
     details.gm > summary::-webkit-details-marker{ display:none; }
     .gmBody{
@@ -366,23 +401,15 @@
       align-items:center;
       justify-content:space-between;
     }
-    .gmBody .left{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .gmBody .right{
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.4;
-    }
+    .gmBody .left{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .gmBody .right{ color:var(--muted); font-size:12px; line-height:1.4; }
+
   </style>
 </head>
 <body>
 
   <div class="app">
-    <!-- PLAYER HUD (LEFT) -->
+    <!-- PLAYER HUD -->
     <div class="panel">
       <div class="hudHeader">
         <div class="bigTitle">Player HUD</div>
@@ -435,15 +462,25 @@
       </div>
     </div>
 
-    <!-- MAP (CENTER) -->
+    <!-- MAP -->
     <div class="panel mapPanel">
       <div class="mapHeader">
         <div class="left">
           <div class="bigTitle">Campaign Map</div>
           <div class="sub">Wheel zoom • Drag pan • Click token to select • Roll move then click highlighted hex</div>
+          <div class="focusCard" id="focusCard" style="display:none;">
+            <div class="focusTop">
+              <div class="focusTitle" id="focusTitle">★ STAR SITE</div>
+              <div class="chip gold" id="focusChip">STAR</div>
+            </div>
+            <div class="focusBody" id="focusBody">—</div>
+            <div class="focusMeta mono" id="focusMeta">—</div>
+          </div>
         </div>
-        <div class="row">
-          <button id="btnCenter" type="button">Center</button>
+        <div class="right">
+          <div class="row">
+            <button id="btnCenter" type="button">Center</button>
+          </div>
         </div>
       </div>
 
@@ -453,12 +490,12 @@
       </div>
     </div>
 
-    <!-- ROUND BOARD (RIGHT) -->
+    <!-- ROUND BOARD -->
     <div class="panel">
       <div class="boardHeader">
         <div>
           <div class="bigTitle">Round Board</div>
-          <div class="sub">What’s happening this round: matchups, pressure, and star control.</div>
+          <div class="sub">Click any item to jump to its location on the map.</div>
         </div>
         <div class="chip gold" id="roundChip">Round 1</div>
       </div>
@@ -477,13 +514,13 @@
 
       <div class="section">
         <div class="title">Star Sites Control</div>
-        <div class="sub">Star sites grant bonuses. Ownership = token on site. Multiple teams = contested.</div>
+        <div class="sub">Click a star site to highlight it and read its bonus.</div>
         <div class="list" id="starList" style="margin-top:10px;"></div>
       </div>
     </div>
   </div>
 
-  <!-- GM CONSOLE (HIDDEN BY DEFAULT) -->
+  <!-- GM CONSOLE -->
   <div class="gmDock">
     <div class="panel gmDrawer">
       <details class="gm" id="gmDetails">
@@ -574,32 +611,32 @@ const IMPORTANT_TYPES = [
 
 const IMPORTANT_VALUE = {
   spaceport: [
-    { tag:"PORT", value:"Rapid deployment corridor", hook:"A functioning landing field changes the entire front." },
-    { tag:"PORT", value:"Air-superiority staging", hook:"Whoever owns the pads owns the skies." }
+    { tag:"PORT", value:"Rapid deployment corridor", hook:"Once per round, one Imperium token may +1 move after rolling." },
+    { tag:"PORT", value:"Air-superiority staging", hook:"When you win a battle here, gain +1 Strategic Rumor influence next round." }
   ],
   manufactorum: [
-    { tag:"MFG", value:"War material & repairs", hook:"Ammo, armor plates, and spare parts—real power." },
-    { tag:"MFG", value:"Vehicle salvage lines", hook:"Wrecks become reinforcements if you can hold the yard." }
+    { tag:"MFG", value:"War material & repairs", hook:"Once per round, reroll your d3 movement (take the new result)." },
+    { tag:"MFG", value:"Vehicle salvage lines", hook:"If you control this, your team gains +1 supply (campaign-level bonus)." }
   ],
   relic_site: [
-    { tag:"RELIC", value:"Archaeotech / sacred asset", hook:"Faith, fear, and firepower all point here." },
-    { tag:"RELIC", value:"Unknown weapon signature", hook:"The readings are impossible. That makes it priceless." }
+    { tag:"RELIC", value:"Archaeotech / sacred asset", hook:"Winner of a battle here may claim a one-time +1 CP (next game)." },
+    { tag:"RELIC", value:"Unknown weapon signature", hook:"Control grants a defensive edge: enemies treat you as in cover on this hex." }
   ],
   vox_relay: [
-    { tag:"VOX", value:"Command & intel advantage", hook:"Orders arrive clean; the enemy’s arrive late." },
-    { tag:"VOX", value:"Signal dominance", hook:"Control the relay, control the narrative." }
+    { tag:"VOX", value:"Command & intel advantage", hook:"Once per round, you may generate one extra Strategic Rumor." },
+    { tag:"VOX", value:"Signal dominance", hook:"Enemies within 4 hexes cannot hide: their Strategic Rumors always generate." }
   ],
   shrine: [
-    { tag:"SHR", value:"Morale & martyrdom site", hook:"Armies break—or become legends—around places like this." },
-    { tag:"SHR", value:"Pilgrimage control point", hook:"This site draws people… and conflict follows." }
+    { tag:"SHR", value:"Morale & martyrdom site", hook:"First loss each round for controlling team does not reduce star control (narrative resilience)." },
+    { tag:"SHR", value:"Pilgrimage control point", hook:"Once per round, a friendly token may move 1 hex for free toward this site." }
   ],
   promethium: [
-    { tag:"FUEL", value:"Fuel & combustion supply", hook:"Promethium keeps guns firing and transports moving." },
-    { tag:"FUEL", value:"Strategic resource node", hook:"Hold it, and everyone else starts bargaining." }
+    { tag:"FUEL", value:"Fuel & combustion supply", hook:"Once per round, add +1 to movement for one token after rolling." },
+    { tag:"FUEL", value:"Strategic resource node", hook:"If contested, both sides generate a Strategic Rumor immediately." }
   ],
   data_vault: [
-    { tag:"DATA", value:"Targeting data / hidden records", hook:"Truth is ammunition when the war is political." },
-    { tag:"DATA", value:"Secure archives", hook:"Some secrets are worth more than a planet." }
+    { tag:"DATA", value:"Targeting data / hidden records", hook:"Once per round, pick a Tactical matchup and reveal its location to all." },
+    { tag:"DATA", value:"Secure archives", hook:"Control grants +1 LOS advantage: treat one blackout hex as transparent this round." }
   ]
 };
 
@@ -618,9 +655,11 @@ let tacticalMatchups = [];
 let seenStrategicPairs = new Set();
 
 let reachable = new Map();
-let hoverKey = null;
-let hoverPath = [];
 let starControl = new Map();
+
+/* NEW: focused highlight/info */
+let focusedHexKey = null;
+let focusPulseUntil = 0;
 
 /* ===========================
    DOM + HELPERS
@@ -654,6 +693,10 @@ function weightedPick(items){
   return items[items.length-1];
 }
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+function safeClip(str){
+  return (str || "").replace(/[^\w\s\-\(\)\.\,\:\;\/]/g, "");
+}
 
 /* ===========================
    HEX MATH
@@ -763,12 +806,6 @@ function teamColor(team){
   if(team===TEAM.IMPERIUM) return { stroke:"rgba(74,166,255,0.62)", fill:"rgba(74,166,255,0.22)", chip:"blue" };
   if(team===TEAM.XENOS)    return { stroke:"rgba(63,191,127,0.62)", fill:"rgba(63,191,127,0.22)", chip:"green" };
   return { stroke:"rgba(204,59,59,0.62)", fill:"rgba(204,59,59,0.22)", chip:"red" };
-}
-function chipForTeam(team){
-  if(team===TEAM.IMPERIUM) return "chip blue";
-  if(team===TEAM.XENOS) return "chip green";
-  if(team===TEAM.CHAOS) return "chip red";
-  return "chip";
 }
 
 function placeTokens(){
@@ -917,11 +954,9 @@ function computeReachableForSelected(){
 
   const startKey = keyOf(tok.q, tok.r);
 
-  // base reach
   const base = bfsReachable(startKey, tok.movePoints);
   for(const [k,d] of base.entries()) reachable.set(k,d);
 
-  // chaos potential +1 (but only valid if it moves closer; we still highlight to show possibility)
   if(tok.team === TEAM.CHAOS){
     const bonus = bfsReachable(startKey, tok.movePoints + 1);
     for(const [k,d] of bonus.entries()){
@@ -1026,7 +1061,6 @@ function generateTacticalRumor(a, b){
 function checkRumorsAfterMove(movedToken){
   if(!movedToken || movedToken.status !== "available") return;
 
-  // Tactical lock: <=2 + LOS
   const candidatesTac = [];
   for(const other of tokens){
     if(other.id === movedToken.id) continue;
@@ -1053,11 +1087,11 @@ function checkRumorsAfterMove(movedToken){
       text: r.text
     });
 
+    focusHex(r.locationKey, { reason:`Locked matchup: ${movedToken.short} vs ${enemy.short}`, openInfo:true });
     toast(`TACTICAL CONTACT: ${movedToken.faction} vs ${enemy.faction}`);
     return;
   }
 
-  // Strategic: <=4 (once per pair per round)
   const candidatesStrat = [];
   for(const other of tokens){
     if(other.id === movedToken.id) continue;
@@ -1088,6 +1122,55 @@ function checkRumorsAfterMove(movedToken){
 
     toast(`Strategic pressure: ${movedToken.short} near ${c.other.short}`);
   }
+}
+
+/* ===========================
+   FOCUS / HIGHLIGHT + INFO
+=========================== */
+function focusHex(hexKey, opts={}){
+  const h = hexes.get(hexKey);
+  if(!h) return;
+
+  focusedHexKey = hexKey;
+  focusPulseUntil = Date.now() + 2400;
+
+  focusOnHex(hexKey);
+
+  // show info card for star site (or if forced openInfo)
+  const openInfo = !!opts.openInfo;
+
+  if(h.important || openInfo){
+    const card = $("focusCard");
+    card.style.display = "block";
+
+    if(h.important){
+      const ctl = starControl.get(hexKey)?.owner ?? null;
+      const ownerText = ctl ? (ctl==="Contested" ? "Contested" : ctl) : "Unheld";
+
+      $("focusTitle").textContent = `★ ${h.important.label} — ${h.important.tag}`;
+      $("focusChip").textContent = ownerText;
+      $("focusChip").className = (ctl==="Contested") ? "chip gold" :
+        (ctl===TEAM.IMPERIUM) ? "chip blue" :
+        (ctl===TEAM.XENOS) ? "chip green" :
+        (ctl===TEAM.CHAOS) ? "chip red" : "chip";
+
+      $("focusBody").textContent = `${h.important.value}. ${h.important.hook}`;
+      const extra = [];
+      extra.push(`Hex ${hexKey}`);
+      extra.push(`${h.biome.label}`);
+      if(h.special?.id === "blackout") extra.push("LOS: BLOCKED");
+      if(h.special?.id === "exclusion") extra.push("MOVE: BLOCKED");
+      $("focusMeta").textContent = extra.join(" • ");
+    }else{
+      $("focusTitle").textContent = `Map Focus`;
+      $("focusChip").textContent = "INFO";
+      $("focusChip").className = "chip";
+      $("focusBody").textContent = opts.reason ? opts.reason : "Focused location.";
+      $("focusMeta").textContent = `Hex ${hexKey}`;
+    }
+  }
+
+  renderAll();
 }
 
 /* ===========================
@@ -1130,7 +1213,6 @@ function drawReachableOverlay(){
     const poly = document.createElementNS(svgNS, "polygon");
     poly.setAttribute("points", pts);
 
-    // Chaos destinations beyond base are shown in gold tint to hint “conditional bonus”
     const chaosTint = (tok.team===TEAM.CHAOS && d > tok.movePoints);
     poly.setAttribute("fill", chaosTint ? "rgba(209,161,75,0.10)" : "rgba(74,166,255,0.08)");
     poly.setAttribute("stroke", chaosTint ? "rgba(209,161,75,0.36)" : "rgba(74,166,255,0.34)");
@@ -1306,23 +1388,21 @@ function drawTokens(){
 
 function drawSelection(){
   const tok = getSelectedToken();
-  if(!tok) return;
-
-  // highlight selected hex
-  const k = keyOf(tok.q,tok.r);
-  const h = hexes.get(k);
-  if(h){
-    const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
-    const poly = document.createElementNS(svgNS, "polygon");
-    poly.setAttribute("points", pts);
-    poly.setAttribute("fill", "transparent");
-    poly.setAttribute("stroke", "rgba(255,255,255,0.65)");
-    poly.setAttribute("stroke-width", "2.4");
-    poly.setAttribute("pointer-events", "none");
-    svg.appendChild(poly);
+  if(tok){
+    const k = keyOf(tok.q,tok.r);
+    const h = hexes.get(k);
+    if(h){
+      const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+      const poly = document.createElementNS(svgNS, "polygon");
+      poly.setAttribute("points", pts);
+      poly.setAttribute("fill", "transparent");
+      poly.setAttribute("stroke", "rgba(255,255,255,0.65)");
+      poly.setAttribute("stroke-width", "2.4");
+      poly.setAttribute("pointer-events", "none");
+      svg.appendChild(poly);
+    }
   }
 
-  // highlight planned dest
   if(plannedDestKey){
     const d = hexes.get(plannedDestKey);
     if(d){
@@ -1334,6 +1414,37 @@ function drawSelection(){
       poly.setAttribute("stroke-width", "2.6");
       poly.setAttribute("pointer-events", "none");
       svg.appendChild(poly);
+    }
+  }
+
+  // NEW: focused hex ring + pulse
+  if(focusedHexKey){
+    const h = hexes.get(focusedHexKey);
+    if(h){
+      const pts = hexCorners(h.q,h.r);
+      const c = axialToPixel(h.q,h.r);
+
+      const poly = document.createElementNS(svgNS, "polygon");
+      poly.setAttribute("points", pts.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" "));
+      poly.setAttribute("fill", "rgba(209,161,75,0.08)");
+      poly.setAttribute("stroke", "rgba(209,161,75,0.92)");
+      poly.setAttribute("stroke-width", "3.0");
+      poly.setAttribute("pointer-events", "none");
+      svg.appendChild(poly);
+
+      const now = Date.now();
+      if(now < focusPulseUntil){
+        const pulse = document.createElementNS(svgNS, "circle");
+        pulse.setAttribute("cx", c.x);
+        pulse.setAttribute("cy", c.y);
+        pulse.setAttribute("r", "6");
+        pulse.setAttribute("fill", "rgba(209,161,75,0.55)");
+        pulse.setAttribute("pointer-events", "none");
+        svg.appendChild(pulse);
+
+        // crude pulse animation via RAF: redraw
+        requestAnimationFrame(() => renderAll());
+      }
     }
   }
 }
@@ -1387,7 +1498,7 @@ function renderPlayerHUD(){
     $("playerHint").textContent = "Roll movement, then click any highlighted hex to move.";
   }else{
     if(tok.team === TEAM.CHAOS){
-      $("playerHint").textContent = "Click a highlighted hex. Gold-tinted reach is conditional (+1 only if you move closer to nearest enemy).";
+      $("playerHint").textContent = "Click a highlighted hex. Gold reach is conditional (+1 only if you move closer to nearest enemy).";
     }else{
       $("playerHint").textContent = "Click a highlighted hex to move. Tactical contact locks at range 2 + LOS.";
     }
@@ -1419,7 +1530,10 @@ function renderMatchups(){
     const place = loc?.important ? `★ ${loc.important.label} (${loc.important.tag})` : (loc?.biome?.label || "Unknown");
 
     const card = document.createElement("div");
-    card.className = "item";
+    card.className = "item clickable";
+    card.title = "Click to focus this location on the map";
+    card.addEventListener("click", () => focusHex(m.locationKey, { reason:m.text, openInfo:true }));
+
     card.innerHTML = `
       <div class="itemTop">
         <div class="itemTitle">${a?.faction || "?"} vs ${b?.faction || "?"}</div>
@@ -1451,7 +1565,10 @@ function renderRumors(){
     const place = loc?.important ? `★ ${loc.important.label} (${loc.important.tag})` : (loc?.biome?.label || "Unknown");
 
     const card = document.createElement("div");
-    card.className = "item";
+    card.className = "item clickable";
+    card.title = "Click to focus this location on the map";
+    card.addEventListener("click", () => focusHex(r.locationKey, { reason:r.text, openInfo:true }));
+
     card.innerHTML = `
       <div class="itemTop">
         <div class="itemTitle">${a?.short || "?"} ↔ ${b?.short || "?"}</div>
@@ -1495,7 +1612,10 @@ function renderStars(){
     const occ = (s.ctl?.occupants || []).map(o => o.short).join(", ");
 
     const card = document.createElement("div");
-    card.className = "item";
+    card.className = "item clickable";
+    card.title = "Click to jump to this star site";
+    card.addEventListener("click", () => focusHex(s.key, { openInfo:true }));
+
     card.innerHTML = `
       <div class="starRow">
         <div class="starIcon">★</div>
@@ -1540,18 +1660,23 @@ function onHexClicked(hexKey){
   }
 
   if(tok.movePoints == null || !tok.moveFrom){
-    toast("Roll movement first, then click a highlighted hex.");
+    // If they click an important hex, focus info anyway
+    const h = hexes.get(hexKey);
+    if(h?.important) focusHex(hexKey, { openInfo:true });
+    else toast("Roll movement first, then click a highlighted hex.");
     renderAll();
     return;
   }
 
   if(!reachable.has(hexKey)){
-    toast("Not reachable (must be highlighted).");
+    // If it’s a star site, let click be “inspect”
+    const h = hexes.get(hexKey);
+    if(h?.important) focusHex(hexKey, { openInfo:true });
+    else toast("Not reachable (must be highlighted).");
     renderAll();
     return;
   }
 
-  // Chaos conditional: if moving beyond base, validate “closer to enemy”
   const dist = reachable.get(hexKey);
   if(tok.team === TEAM.CHAOS && dist > tok.movePoints){
     if(!chaosEffectiveBonusActive(tok, hexKey)){
@@ -1570,6 +1695,10 @@ function onHexClicked(hexKey){
   reachable = new Map();
   plannedDestKey = null;
 
+  // If they moved onto a star, auto-focus it
+  const h = hexes.get(hexKey);
+  if(h?.important) focusHex(hexKey, { openInfo:true });
+
   checkRumorsAfterMove(tok);
   renderAll();
 }
@@ -1577,9 +1706,7 @@ function onHexClicked(hexKey){
 /* ===========================
    BUTTONS
 =========================== */
-$("tokenSelect").addEventListener("change", (e) => {
-  selectToken(e.target.value);
-});
+$("tokenSelect").addEventListener("change", (e) => selectToken(e.target.value));
 
 $("btnRollMove").addEventListener("click", () => {
   const tok = getSelectedToken();
@@ -1632,7 +1759,6 @@ $("btnNewRound").addEventListener("click", () => {
 $("btnRegenTerrain").addEventListener("click", () => {
   generateHexes();
 
-  // Ensure tokens not stranded on blocked movement
   for(const tok of tokens){
     const h = hexes.get(keyOf(tok.q,tok.r));
     if(h?.special?.blocks_movement){
@@ -1760,7 +1886,7 @@ function focusOnHex(hexKey){
 }
 
 /* ===========================
-   RENDER ALL
+   INIT
 =========================== */
 function renderAll(){
   renderRoundChip();
@@ -1772,16 +1898,13 @@ function renderAll(){
   renderMap();
 }
 
-/* ===========================
-   INIT
-=========================== */
 function init(){
   generateHexes();
   placeTokens();
   resetView();
   computeReachableForSelected();
   renderAll();
-  toast("Player-facing layout loaded: HUD (left), Map (center), Round Board (right). GM tools are hidden below.");
+  toast("Click a ★ site on the right to jump to it and see its bonus.");
 }
 init();
 </script>
