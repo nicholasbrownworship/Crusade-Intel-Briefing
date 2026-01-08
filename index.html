@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Crusade Campaign Kit — Map + Movement + Rumors</title>
+  <title>Crusade Campaign Kit — Player HUD</title>
   <style>
     :root{
       --bg0:#07080b;
@@ -18,6 +18,7 @@
       --blue:#4aa6ff;
 
       --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.09);
       --stroke: rgba(255,255,255,0.14);
 
       --radius:18px;
@@ -46,54 +47,52 @@
       overflow:hidden;
     }
 
-    /* ===== Top bar ===== */
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+    /* ===== Layout ===== */
+    .app{
+      width:min(1680px, 100%);
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 360px 1fr 420px;
       gap:12px;
-      padding:12px 14px;
-      margin-bottom:12px;
+      align-items:stretch;
     }
-    .brand{
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      min-width: 0;
-    }
-    .brand .t{
-      font-size:13px;
-      letter-spacing:0.16em;
-      text-transform:uppercase;
-      margin:0;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .brand .s{
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.3;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .topActions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
+    @media (max-width: 1260px){
+      .app{ grid-template-columns: 1fr; }
+      .mapPanel svg{ height: min(70vh, 920px) !important; }
     }
 
+    /* ===== Shared typography ===== */
+    .title{
+      font-size:12px;
+      letter-spacing:0.16em;
+      text-transform:uppercase;
+      color:var(--muted);
+      font-weight:900;
+    }
+    .bigTitle{
+      margin:0;
+      font-size:14px;
+      letter-spacing:0.18em;
+      text-transform:uppercase;
+      font-weight:1000;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+    /* ===== Buttons ===== */
     button{
       appearance:none;
       border:1px solid rgba(255,255,255,0.14);
       background: rgba(255,255,255,0.06);
       color:var(--ink);
-      padding:8px 10px;
+      padding:10px 12px;
       border-radius: 12px;
       cursor:pointer;
-      font-weight:650;
+      font-weight:750;
       letter-spacing:0.02em;
       transition: transform .12s ease, background .12s ease, border-color .12s ease;
       user-select:none;
@@ -113,233 +112,109 @@
       background: rgba(209,161,75,0.22);
       border-color: rgba(209,161,75,0.50);
     }
-    button.danger{
-      border-color: rgba(204,59,59,0.35);
-      background: rgba(204,59,59,0.14);
-    }
-    button.danger:hover{
-      background: rgba(204,59,59,0.20);
-      border-color: rgba(204,59,59,0.50);
-    }
     button:disabled{
       opacity:0.45;
       cursor:not-allowed;
       transform:none;
     }
 
-    /* ===== Main layout ===== */
-    .layout{
-      width:min(1600px, 100%);
-      margin:0 auto;
-      display:grid;
-      grid-template-columns: 360px 1fr 360px;
-      gap:12px;
-      align-items:stretch;
-    }
-    @media (max-width: 1220px){
-      .layout{ grid-template-columns: 1fr; }
-      .col{ min-height: unset; }
-      svg{ height: min(66vh, 860px) !important; }
-    }
+    /* ===== Cards/blocks ===== */
+    .pad{ padding:12px 12px; }
+    .section{ padding:12px 12px; border-top:1px solid rgba(255,255,255,0.10); }
+    .section:first-child{ border-top:none; }
+    .stack{ display:grid; gap:10px; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 
-    .col{
-      display:flex;
-      flex-direction:column;
-      min-height: calc(100vh - 14px - 14px - 12px - 12px);
-    }
-
-    /* ===== Tabs ===== */
-    .tabs{
-      display:flex;
-      gap:6px;
-      padding:10px 10px;
-      border-bottom:1px solid var(--stroke);
-      background: rgba(0,0,0,0.12);
-    }
-    .tab{
-      flex:1 1 auto;
-      text-align:center;
-      padding:8px 10px;
-      border-radius: 12px;
-      border:1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.04);
-      color:var(--muted);
-      cursor:pointer;
-      font-weight:800;
-      letter-spacing:0.06em;
-      text-transform:uppercase;
-      font-size:11px;
-      user-select:none;
-    }
-    .tab.active{
-      color: var(--ink);
-      border-color: rgba(74,166,255,0.35);
-      background: rgba(74,166,255,0.10);
-      box-shadow: 0 0 0 2px rgba(74,166,255,0.10) inset;
-    }
-    .tabContent{
-      padding:12px 12px;
-      overflow:auto;
-    }
-
-    .section{
-      margin-top:12px;
-      padding-top:12px;
-      border-top:1px solid var(--stroke);
-    }
-    .section:first-child{
-      margin-top:0;
-      padding-top:0;
-      border-top:none;
-    }
-    .section h2{
-      margin:0 0 8px 0;
-      font-size:12px;
-      letter-spacing:0.14em;
-      text-transform:uppercase;
-      color:var(--muted);
-    }
-
-    .hint{
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.5;
-    }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-
-    .kv{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:8px;
-    }
-    .pill{
+    .box{
       border:1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.22);
       border-radius: 14px;
       padding:10px 10px;
-      min-height: 56px;
     }
-    .k{
+
+    /* ===== Player HUD ===== */
+    .hudHeader{
+      padding:14px 14px;
+      border-bottom:1px solid rgba(255,255,255,0.10);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    label{
+      color:var(--muted);
       font-size:11px;
       letter-spacing:0.10em;
       text-transform:uppercase;
-      color:var(--muted);
+      font-weight:800;
+      display:block;
+      margin-bottom:6px;
     }
-    .v{
-      margin-top:7px;
-      font-weight:900;
-      font-size:13px;
-      line-height:1.25;
-    }
-
-    .stepper{
-      border:1px solid rgba(255,255,255,0.12);
+    select{
+      width:100%;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,0.14);
       background: rgba(0,0,0,0.22);
-      border-radius: 14px;
-      padding:10px 10px;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.4;
+      color: var(--ink);
+      font-weight:800;
+      outline:none;
     }
-    .step{
-      display:flex;
-      gap:8px;
-      align-items:center;
-    }
-    .chk{
-      width:16px; height:16px;
-      border-radius:6px;
-      border:1px solid rgba(255,255,255,0.18);
-      display:grid;
-      place-items:center;
-      color: rgba(255,255,255,0.78);
-      font-size:11px;
-      flex:0 0 auto;
-      background: rgba(255,255,255,0.04);
-    }
-    .chk.on{
-      border-color: rgba(63,191,127,0.38);
-      background: rgba(63,191,127,0.10);
-      color:#d9fff0;
+    select:focus{
+      border-color: rgba(74,166,255,0.45);
+      box-shadow: 0 0 0 2px rgba(74,166,255,0.12);
     }
 
-    .bigMove{
+    .moveBig{
       display:flex;
-      gap:10px;
       align-items:center;
       justify-content:space-between;
+      gap:10px;
+      padding:12px 12px;
+      border-radius: 14px;
       border:1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.22);
-      border-radius: 14px;
-      padding:10px 10px;
-      margin-top:10px;
     }
-    .bigMove .label{
+    .moveBig .k{
       color:var(--muted);
       font-size:11px;
       letter-spacing:0.10em;
       text-transform:uppercase;
+      font-weight:800;
     }
-    .bigMove .num{
+    .moveBig .v{
+      font-size:22px;
       font-weight:1000;
-      font-size:20px;
       letter-spacing:0.02em;
     }
 
-    .rowBtns{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
-
-    /* token cards */
-    .list{ display:grid; gap:8px; }
-    .tokenCard{
-      border:1px solid rgba(255,255,255,0.12);
-      background: rgba(0,0,0,0.22);
-      border-radius: 14px;
-      padding:10px 10px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      cursor:pointer;
-      transition: border-color .12s ease, background .12s ease;
-    }
-    .tokenCard:hover{
-      border-color: rgba(255,255,255,0.22);
-      background: rgba(255,255,255,0.06);
-    }
-    .tokenCard.active{
-      border-color: rgba(74,166,255,0.45);
-      box-shadow: 0 0 0 2px rgba(74,166,255,0.14) inset;
-    }
-    .tokenMeta{
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      min-width: 0;
-    }
-    .tokenName{
-      font-weight:900;
-      font-size:13px;
-      line-height:1.2;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .tokenSub{
+    .statusLine{
       color:var(--muted);
       font-size:12px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      line-height:1.4;
     }
-    .badge{
+
+    .hintBar{
+      border-top:1px solid rgba(255,255,255,0.10);
+      padding:10px 12px;
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    /* ===== Round Board ===== */
+    .boardHeader{
+      padding:14px 14px;
+      border-bottom:1px solid rgba(255,255,255,0.10);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .chip{
       font-size:11px;
       letter-spacing:0.10em;
       text-transform:uppercase;
@@ -348,38 +223,48 @@
       border:1px solid rgba(255,255,255,0.14);
       background: rgba(255,255,255,0.06);
       color: var(--muted);
-      flex:0 0 auto;
+      font-weight:900;
     }
-    .badge.blue{ border-color: rgba(74,166,255,0.35); color:#d8efff; }
-    .badge.green{ border-color: rgba(63,191,127,0.35); color:#d9fff0; }
-    .badge.red{ border-color: rgba(204,59,59,0.35); color:#ffd6d6; }
-    .badge.gold{ border-color: rgba(209,161,75,0.40); color:#f2e6cf; }
+    .chip.blue{ border-color: rgba(74,166,255,0.35); color:#d8efff; }
+    .chip.green{ border-color: rgba(63,191,127,0.35); color:#d9fff0; }
+    .chip.red{ border-color: rgba(204,59,59,0.35); color:#ffd6d6; }
+    .chip.gold{ border-color: rgba(209,161,75,0.40); color:#f2e6cf; }
 
-    /* intel logs */
-    .log{
+    .list{
+      display:grid;
+      gap:10px;
+    }
+    .item{
       border:1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.22);
       border-radius: 14px;
       padding:10px 10px;
-      color: var(--ink);
-      font-size:12px;
-      line-height:1.5;
-      max-height: 380px;
-      overflow:auto;
-      white-space:pre-wrap;
     }
-
-    /* star list */
-    .starList{ display:grid; gap:8px; }
-    .starRow{
-      border:1px solid rgba(255,255,255,0.12);
-      background: rgba(0,0,0,0.22);
-      border-radius: 14px;
-      padding:10px 10px;
+    .itemTop{
       display:flex;
+      justify-content:space-between;
       gap:10px;
       align-items:flex-start;
+      flex-wrap:wrap;
     }
+    .itemTitle{
+      font-weight:1000;
+      font-size:13px;
+      line-height:1.25;
+    }
+    .itemSub{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+    .smallDim{
+      color:var(--dim);
+      font-size:11px;
+      margin-top:6px;
+    }
+
+    /* Star control list */
     .starIcon{
       width:28px; height:28px;
       border-radius: 10px;
@@ -388,41 +273,19 @@
       border:1px solid rgba(209,161,75,0.40);
       background: rgba(209,161,75,0.10);
       color: rgba(209,161,75,0.95);
+      font-weight:1000;
       flex:0 0 auto;
-      font-weight:900;
     }
-    .starMeta{ flex:1 1 auto; min-width:0; }
-    .starTitle{
-      font-weight:900;
-      font-size:13px;
-      line-height:1.2;
+    .starRow{
       display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    .starSub{
-      margin-top:4px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.4;
-    }
-    .starTiny{
-      margin-top:6px;
-      color: var(--dim);
-      font-size:11px;
-      letter-spacing:0.02em;
+      gap:10px;
+      align-items:flex-start;
     }
 
-    /* Map */
-    .mapPanel{
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-    }
+    /* ===== Map Panel ===== */
     .mapHeader{
       padding:12px 14px;
-      border-bottom:1px solid var(--stroke);
+      border-bottom:1px solid rgba(255,255,255,0.10);
       display:flex;
       justify-content:space-between;
       gap:12px;
@@ -431,31 +294,14 @@
     .mapHeader .left{
       display:flex;
       flex-direction:column;
-      gap:4px;
-      min-width: 0;
-    }
-    .mapHeader .left .big{
-      font-size:13px;
-      letter-spacing:0.16em;
-      text-transform:uppercase;
-      margin:0;
-    }
-    .mapHeader .left .small{
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.3;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      gap:6px;
+      min-width:0;
     }
 
-    .mapWrap{
-      position:relative;
-      padding:10px;
-    }
+    .mapWrap{ position:relative; padding:10px; }
     svg{
       width:100%;
-      height:min(76vh, 900px);
+      height:min(80vh, 980px);
       display:block;
       background: radial-gradient(700px 480px at 40% 30%, rgba(255,255,255,0.06), transparent 60%);
       border-radius: 14px;
@@ -485,194 +331,178 @@
     }
     .toast.show{ opacity:1; transform: translateY(0); }
 
-    .footerHint{
-      padding:10px 14px;
-      border-top:1px solid var(--stroke);
-      color:var(--muted);
-      font-size:12px;
+    /* ===== GM Drawer ===== */
+    .gmDock{
+      position:sticky;
+      bottom:12px;
+      margin-top:12px;
+    }
+    .gmDrawer{
+      width:min(1680px, 100%);
+      margin:0 auto;
+    }
+    details.gm details-summary { list-style:none; }
+    details.gm > summary{
+      cursor:pointer;
+      user-select:none;
+      padding:12px 14px;
       display:flex;
-      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
       gap:10px;
+      color:var(--muted);
+      font-weight:1000;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      font-size:11px;
+    }
+    details.gm > summary::-webkit-details-marker{ display:none; }
+    .gmBody{
+      border-top:1px solid rgba(255,255,255,0.10);
+      padding:12px 14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .gmBody .left{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
       align-items:center;
     }
-    .dot{
-      width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:6px;
-      border:1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.12);
-      transform: translateY(1px);
+    .gmBody .right{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
     }
-    .dot.i{ background: rgba(74,166,255,0.25); border-color: rgba(74,166,255,0.45); }
-    .dot.x{ background: rgba(63,191,127,0.25); border-color: rgba(63,191,127,0.45); }
-    .dot.c{ background: rgba(204,59,59,0.25); border-color: rgba(204,59,59,0.45); }
   </style>
 </head>
 <body>
 
-  <!-- TOP BAR -->
-  <div class="panel topbar">
-    <div class="brand">
-      <div class="t">Crusade Campaign Kit</div>
-      <div class="s" id="topHint">Select a token → Roll move → Click a highlighted hex. Tactical matchups lock when enemy is within 2 + LOS.</div>
-    </div>
-    <div class="topActions">
-      <button id="btnNewRound" class="primary" type="button">New Round</button>
-      <button id="btnRegenTerrain" type="button">Randomize Terrain</button>
-      <button id="btnCenter" type="button">Center View</button>
-      <button id="btnExport" type="button">Copy Round Export</button>
-      <button id="btnResetMap" class="danger" type="button">Reset Map</button>
-    </div>
-  </div>
-
-  <div class="layout">
-    <!-- ACTIONS (LEFT) -->
-    <div class="panel col">
-      <div class="tabs">
-        <div class="tab active" data-tab="actionsTokens">Tokens</div>
-        <div class="tab" data-tab="actionsMove">Movement</div>
+  <div class="app">
+    <!-- PLAYER HUD (LEFT) -->
+    <div class="panel">
+      <div class="hudHeader">
+        <div class="bigTitle">Player HUD</div>
+        <div class="sub">Pick your army token, roll movement, then click a highlighted hex.</div>
       </div>
 
-      <div class="tabContent" id="actionsTokens">
-        <div class="section">
-          <h2>Tokens</h2>
-          <div class="hint" style="margin-bottom:8px;">
-            Click a token card (or the token on the map) to select it.
-          </div>
-          <div class="list" id="tokenList"></div>
-        </div>
-
-        <div class="section">
-          <h2>Selected</h2>
-          <div class="kv">
-            <div class="pill">
-              <div class="k">Faction</div>
-              <div class="v" id="selFaction">—</div>
-            </div>
-            <div class="pill">
-              <div class="k">Team</div>
-              <div class="v" id="selTeam">—</div>
-            </div>
-            <div class="pill">
-              <div class="k">Hex</div>
-              <div class="v mono" id="selHex">—</div>
-            </div>
-            <div class="pill">
-              <div class="k">Status</div>
-              <div class="v" id="selStatus">—</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tabContent" id="actionsMove" style="display:none;">
-        <div class="section">
-          <h2>Move Flow</h2>
-          <div class="stepper">
-            <div class="step"><span class="chk" id="chk1">1</span> Select a token</div>
-            <div class="step"><span class="chk" id="chk2">2</span> Roll movement</div>
-            <div class="step"><span class="chk" id="chk3">3</span> Click a highlighted hex</div>
+      <div class="section">
+        <div class="stack">
+          <div>
+            <label for="tokenSelect">Your Token</label>
+            <select id="tokenSelect"></select>
+            <div class="statusLine" id="tokenStatus">—</div>
           </div>
 
-          <div class="bigMove">
+          <div class="moveBig">
             <div>
-              <div class="label">Move Points</div>
-              <div class="hint">d3 + team bonus</div>
+              <div class="k">Move Points</div>
+              <div class="sub">d3 + team bonus</div>
             </div>
-            <div class="num mono" id="selMoveBig">—</div>
+            <div class="v mono" id="movePointsBig">—</div>
           </div>
 
-          <div class="rowBtns">
-            <button id="btnRollMove" class="primary" type="button">Roll Move</button>
-            <button id="btnClearMove" type="button">Clear Move</button>
+          <div class="row">
+            <button class="primary" id="btnRollMove" type="button">Roll Move</button>
+            <button id="btnClearMove" type="button">Clear</button>
+            <button id="btnFocus" type="button">Focus Me</button>
           </div>
 
-          <div class="kv" style="margin-top:10px;">
-            <div class="pill">
-              <div class="k">Destination</div>
-              <div class="v mono" id="selDest">—</div>
+          <div class="box">
+            <div class="title">Movement Rules</div>
+            <div class="sub" style="margin-top:6px;">
+              <span class="mono">Imperium</span>: +1 move<br/>
+              <span class="mono">Xenos</span>: minimum roll is 2<br/>
+              <span class="mono">Chaos</span>: +1 effective move if destination is closer to nearest enemy
             </div>
-            <div class="pill">
-              <div class="k">Reachable</div>
-              <div class="v" id="selReachCount">—</div>
-            </div>
           </div>
 
-          <div class="pill" style="margin-top:10px;">
-            <div class="k">Hover / Path</div>
-            <div class="v mono" id="selHover">—</div>
-          </div>
-
-          <div class="section">
-            <h2>Team Benefits</h2>
-            <div class="hint">
-              • <span class="mono">Imperium</span>: +1 move<br/>
-              • <span class="mono">Xenos</span>: minimum roll is 2<br/>
-              • <span class="mono">Chaos</span>: +1 effective move if destination is closer to nearest enemy than your start
+          <div class="box">
+            <div class="title">What to do now</div>
+            <div class="sub" id="playerHint" style="margin-top:6px;">
+              Select a token to begin.
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="hintBar">
+        Tactical matchup locks at <span class="mono">range 2 + LOS</span>.
+        Strategic rumor appears at <span class="mono">range 4</span>.
       </div>
     </div>
 
     <!-- MAP (CENTER) -->
-    <div class="panel mapPanel col">
+    <div class="panel mapPanel">
       <div class="mapHeader">
         <div class="left">
-          <div class="big">Hex Map</div>
-          <div class="small">Wheel zoom • Drag pan • Click token to select • Roll move then click highlighted hex</div>
+          <div class="bigTitle">Campaign Map</div>
+          <div class="sub">Wheel zoom • Drag pan • Click token to select • Roll move then click highlighted hex</div>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-          <button id="btnFocusSelected" type="button">Focus Selected</button>
+        <div class="row">
+          <button id="btnCenter" type="button">Center</button>
         </div>
       </div>
+
       <div class="mapWrap">
         <svg id="svg" viewBox="0 0 1200 860" aria-label="Hex map"></svg>
         <div class="toast" id="toast"></div>
       </div>
-      <div class="footerHint">
-        <span><span class="dot i"></span>Imperium</span>
-        <span><span class="dot.x"></span>Xenos</span>
-        <span><span class="dot.c"></span>Chaos</span>
-        <span>• ★ important site • <span class="mono">JAM</span> blocks LOS • <span class="mono">X</span> blocks movement</span>
-      </div>
     </div>
 
-    <!-- INTEL (RIGHT) -->
-    <div class="panel col">
-      <div class="tabs">
-        <div class="tab active" data-tab="intelStars">Star Sites</div>
-        <div class="tab" data-tab="intelRumors">Rumors</div>
-        <div class="tab" data-tab="intelMatchups">Matchups</div>
+    <!-- ROUND BOARD (RIGHT) -->
+    <div class="panel">
+      <div class="boardHeader">
+        <div>
+          <div class="bigTitle">Round Board</div>
+          <div class="sub">What’s happening this round: matchups, pressure, and star control.</div>
+        </div>
+        <div class="chip gold" id="roundChip">Round 1</div>
       </div>
 
-      <div class="tabContent" id="intelStars">
-        <div class="section">
-          <h2>Star Sites Control</h2>
-          <div class="hint" style="margin-bottom:8px;">
-            A ★ site is controlled by the team with a token on the hex. Multiple teams = Contested.
-          </div>
-          <div class="starList" id="starList"></div>
-        </div>
+      <div class="section">
+        <div class="title">Tactical Matchups</div>
+        <div class="sub">Locked games (range 2 + LOS). Tokens are removed from pairing pool.</div>
+        <div class="list" id="matchupList" style="margin-top:10px;"></div>
       </div>
 
-      <div class="tabContent" id="intelRumors" style="display:none;">
-        <div class="section">
-          <h2>Strategic Rumors</h2>
-          <div class="hint" style="margin-bottom:8px;">
-            Generated when an enemy is within <span class="mono">4</span> hexes (LOS not required).
-          </div>
-          <div class="log" id="logStrategic"></div>
-        </div>
+      <div class="section">
+        <div class="title">Strategic Rumors</div>
+        <div class="sub">Pressure signals (range 4). These can be dodged by movement.</div>
+        <div class="list" id="rumorList" style="margin-top:10px;"></div>
       </div>
 
-      <div class="tabContent" id="intelMatchups" style="display:none;">
-        <div class="section">
-          <h2>Tactical Matchups (Locked)</h2>
-          <div class="hint" style="margin-bottom:8px;">
-            Locks when an enemy is within <span class="mono">2</span> hexes <em>and</em> LOS is clear.
-          </div>
-          <div class="log" id="logTactical"></div>
-        </div>
+      <div class="section">
+        <div class="title">Star Sites Control</div>
+        <div class="sub">Star sites grant bonuses. Ownership = token on site. Multiple teams = contested.</div>
+        <div class="list" id="starList" style="margin-top:10px;"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- GM CONSOLE (HIDDEN BY DEFAULT) -->
+  <div class="gmDock">
+    <div class="panel gmDrawer">
+      <details class="gm" id="gmDetails">
+        <summary>
+          <span>GM Console</span>
+          <span class="sub">Reset • Randomize • Export • Round control</span>
+        </summary>
+        <div class="gmBody">
+          <div class="left">
+            <button class="primary" id="btnNewRound" type="button">New Round</button>
+            <button id="btnRegenTerrain" type="button">Randomize Terrain</button>
+            <button id="btnExport" type="button">Copy Round Export</button>
+            <button id="btnResetMap" type="button">Reset Map</button>
+          </div>
+          <div class="right" id="gmStatus">
+            Tip: Keep this closed during play. Players only need HUD + Board + Map.
+          </div>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -706,7 +536,6 @@ const HEX_SIZE = 34;
 const GRID_RADIUS = 7;
 const CENTER = { x: 600, y: 430 };
 
-/* Terrain chip colors */
 const BIOME_CHIP = {
   plains:   { dot:"rgba(255,255,255,0.55)", text:"rgba(255,255,255,0.80)" },
   forest:   { dot:"rgba(63,191,127,0.72)",  text:"rgba(63,191,127,0.94)"  },
@@ -789,11 +618,8 @@ let tacticalMatchups = [];
 let seenStrategicPairs = new Set();
 
 let reachable = new Map();
-let reachableOrder = [];
 let hoverKey = null;
 let hoverPath = [];
-let hoverDistance = null;
-
 let starControl = new Map();
 
 /* ===========================
@@ -900,15 +726,12 @@ function generateHexes(){
   for(let q=-GRID_RADIUS; q<=GRID_RADIUS; q++){
     for(let r=-GRID_RADIUS; r<=GRID_RADIUS; r++){
       if(axialDistance(0,0,q,r) > GRID_RADIUS) continue;
-
       const biome = pick(BIOMES);
       const special = weightedPick(SPECIALS);
-
       hexes.set(keyOf(q,r), { q,r, biome, special, important:null });
     }
   }
 
-  // Place important sites
   const keys = [...hexes.keys()];
   const count = randInt(10,12);
   for(let i=0;i<count;i++){
@@ -937,15 +760,15 @@ function generateHexes(){
    TOKENS
 =========================== */
 function teamColor(team){
-  if(team===TEAM.IMPERIUM) return { stroke:"rgba(74,166,255,0.62)", fill:"rgba(74,166,255,0.22)", badge:"blue" };
-  if(team===TEAM.XENOS)    return { stroke:"rgba(63,191,127,0.62)", fill:"rgba(63,191,127,0.22)", badge:"green" };
-  return { stroke:"rgba(204,59,59,0.62)", fill:"rgba(204,59,59,0.22)", badge:"red" };
+  if(team===TEAM.IMPERIUM) return { stroke:"rgba(74,166,255,0.62)", fill:"rgba(74,166,255,0.22)", chip:"blue" };
+  if(team===TEAM.XENOS)    return { stroke:"rgba(63,191,127,0.62)", fill:"rgba(63,191,127,0.22)", chip:"green" };
+  return { stroke:"rgba(204,59,59,0.62)", fill:"rgba(204,59,59,0.22)", chip:"red" };
 }
-function teamBadge(team){
-  if(team===TEAM.IMPERIUM) return { cls:"blue", label:"Imperium" };
-  if(team===TEAM.XENOS) return { cls:"green", label:"Xenos" };
-  if(team===TEAM.CHAOS) return { cls:"red", label:"Chaos" };
-  return { cls:"", label:"Unheld" };
+function chipForTeam(team){
+  if(team===TEAM.IMPERIUM) return "chip blue";
+  if(team===TEAM.XENOS) return "chip green";
+  if(team===TEAM.CHAOS) return "chip red";
+  return "chip";
 }
 
 function placeTokens(){
@@ -1002,13 +825,15 @@ function placeTokens(){
   }
 
   selectedTokenId = tokens[0]?.id || null;
-  clearMovementUX();
+  plannedDestKey = null;
+  reachable = new Map();
 }
 
 /* ===========================
-   MOVEMENT + REACHABILITY
+   MOVEMENT
 =========================== */
 function d3(){ return randInt(1,3); }
+function getSelectedToken(){ return tokens.find(t=>t.id===selectedTokenId) || null; }
 
 function nearestEnemyDistance(tokenId, q, r){
   const me = tokens.find(t=>t.id===tokenId);
@@ -1032,7 +857,6 @@ function rollMoveFor(token){
 
   if(token.team === TEAM.IMPERIUM) move = roll + 1;
   else if(token.team === TEAM.XENOS) move = Math.max(2, roll);
-  else move = roll;
 
   token.movePoints = move;
   token.moveFrom = keyOf(token.q, token.r);
@@ -1042,29 +866,12 @@ function rollMoveFor(token){
   toast(`Move rolled for ${token.faction}: d3=${roll} → Move=${move}`);
 }
 
-function chaosEffectiveMove(token, destKey){
-  if(token.team !== TEAM.CHAOS) return token.movePoints ?? 0;
-  if(token.movePoints == null || !token.moveFrom) return token.movePoints ?? 0;
-
-  const start = parseKey(token.moveFrom);
-  const dest = parseKey(destKey);
-
-  const nearestStart = nearestEnemyDistance(token.id, start.q, start.r);
-  const nearestDest  = nearestEnemyDistance(token.id, dest.q, dest.r);
-
-  let eff = token.movePoints;
-  if(Number.isFinite(nearestStart) && Number.isFinite(nearestDest) && nearestDest < nearestStart) eff += 1;
-  return eff;
-}
-
 function bfsReachable(startKey, maxDist){
   const start = parseKey(startKey);
   const dist = new Map();
-  const parent = new Map();
   const q = [{ q:start.q, r:start.r }];
 
   dist.set(startKey, 0);
-  parent.set(startKey, null);
 
   while(q.length){
     const cur = q.shift();
@@ -1083,70 +890,44 @@ function bfsReachable(startKey, maxDist){
       if(nd > maxDist) continue;
 
       dist.set(nk, nd);
-      parent.set(nk, curKey);
       q.push({ q:nb.q, r:nb.r });
     }
   }
-  return { dist, parent };
+  return dist;
+}
+
+function chaosEffectiveBonusActive(token, destKey){
+  if(token.team !== TEAM.CHAOS) return false;
+  if(token.movePoints == null || !token.moveFrom) return false;
+
+  const start = parseKey(token.moveFrom);
+  const dest = parseKey(destKey);
+
+  const nearestStart = nearestEnemyDistance(token.id, start.q, start.r);
+  const nearestDest  = nearestEnemyDistance(token.id, dest.q, dest.r);
+
+  return Number.isFinite(nearestStart) && Number.isFinite(nearestDest) && nearestDest < nearestStart;
 }
 
 function computeReachableForSelected(){
   const tok = getSelectedToken();
-  if(!tok || tok.movePoints == null || !tok.moveFrom){
-    clearMovementUX();
-    return;
-  }
+  reachable = new Map();
+
+  if(!tok || tok.movePoints == null || !tok.moveFrom) return;
 
   const startKey = keyOf(tok.q, tok.r);
 
-  reachable = new Map();
-  const base = tok.movePoints;
+  // base reach
+  const base = bfsReachable(startKey, tok.movePoints);
+  for(const [k,d] of base.entries()) reachable.set(k,d);
 
-  const baseRes = bfsReachable(startKey, base);
-  for(const [k,d] of baseRes.dist.entries()) reachable.set(k, d);
-  tok._parentBase = baseRes.parent;
-
+  // chaos potential +1 (but only valid if it moves closer; we still highlight to show possibility)
   if(tok.team === TEAM.CHAOS){
-    const bonusRes = bfsReachable(startKey, base + 1);
-    tok._parentBonus = bonusRes.parent;
-
-    tok._bonusOnly = new Set();
-    for(const [k,d] of bonusRes.dist.entries()){
-      if(!reachable.has(k)){
-        tok._bonusOnly.add(k);
-        reachable.set(k, d);
-      }
+    const bonus = bfsReachable(startKey, tok.movePoints + 1);
+    for(const [k,d] of bonus.entries()){
+      if(!reachable.has(k)) reachable.set(k,d);
     }
-  }else{
-    tok._parentBonus = null;
-    tok._bonusOnly = new Set();
   }
-
-  $("selReachCount").textContent = `${reachable.size} hexes`;
-}
-
-function clearMovementUX(){
-  reachable = new Map();
-  hoverKey = null;
-  hoverPath = [];
-  hoverDistance = null;
-  plannedDestKey = null;
-  $("selReachCount").textContent = "—";
-  $("selHover").textContent = "—";
-  $("selDest").textContent = "—";
-}
-
-function reconstructPath(parentMap, startKey, endKey){
-  if(!parentMap || !parentMap.has(endKey)) return [];
-  const path = [];
-  let cur = endKey;
-  while(cur){
-    path.push(parseKey(cur));
-    cur = parentMap.get(cur);
-  }
-  path.reverse();
-  if(path.length && keyOf(path[0].q,path[0].r) !== startKey) return [];
-  return path;
 }
 
 /* ===========================
@@ -1163,75 +944,8 @@ function computeStarControl(){
     let owner = null;
     if(teamsHere.length === 1) owner = teamsHere[0];
     else if(teamsHere.length > 1) owner = "Contested";
-    else owner = null;
 
     starControl.set(k, { owner, occupants });
-  }
-}
-
-function renderStarControl(){
-  computeStarControl();
-  const list = $("starList");
-  list.innerHTML = "";
-
-  const stars = [...hexes.entries()]
-    .filter(([k,h]) => h.important)
-    .map(([k,h]) => ({ key:k, hex:h, ctl: starControl.get(k) }))
-    .sort((a,b) => (b.hex.important.importance||0) - (a.hex.important.importance||0));
-
-  if(!stars.length){
-    list.textContent = "—";
-    return;
-  }
-
-  for(const s of stars){
-    const row = document.createElement("div");
-    row.className = "starRow";
-
-    const icon = document.createElement("div");
-    icon.className = "starIcon";
-    icon.textContent = "★";
-
-    const meta = document.createElement("div");
-    meta.className = "starMeta";
-
-    const title = document.createElement("div");
-    title.className = "starTitle";
-    title.textContent = `${s.hex.important.label} (${s.hex.important.tag})`;
-
-    const badge = document.createElement("span");
-    const owner = s.ctl?.owner ?? null;
-
-    if(owner === "Contested"){
-      badge.className = "badge gold";
-      badge.textContent = "Contested";
-    }else if(owner){
-      const b = teamBadge(owner);
-      badge.className = "badge " + b.cls;
-      badge.textContent = b.label;
-    }else{
-      badge.className = "badge";
-      badge.textContent = "Unheld";
-    }
-
-    title.appendChild(badge);
-
-    const sub = document.createElement("div");
-    sub.className = "starSub";
-    sub.textContent = `${s.hex.important.value} — ${s.hex.important.hook}`;
-
-    const tiny = document.createElement("div");
-    tiny.className = "starTiny mono";
-    const occ = (s.ctl?.occupants || []).map(o => o.short).join(", ");
-    tiny.textContent = `Hex ${s.key} • Importance ${s.hex.important.importance} • Occupants: ${occ || "—"}`;
-
-    meta.appendChild(title);
-    meta.appendChild(sub);
-    meta.appendChild(tiny);
-
-    row.appendChild(icon);
-    row.appendChild(meta);
-    list.appendChild(row);
   }
 }
 
@@ -1239,15 +953,15 @@ function renderStarControl(){
    RUMORS
 =========================== */
 const STRATEGIC_TEMPLATES = [
-  "Long-range augurs register hostile movement near {place}. No visual confirmation. Indicators suggest {theme}.",
-  "Vox-traffic distortions cluster around {place}. Reports conflict, but point to {theme}. Treat as pressure.",
-  "Civilian rumor chains and intercepted chatter mention {place}. The pattern reads as {theme}. Expect misdirection."
+  "Long-range augurs register hostile movement near {place}. Indicators suggest {theme}.",
+  "Vox-traffic distortions cluster around {place}. Reports conflict, but point to {theme}.",
+  "Civ rumor chains mention {place}. The pattern reads as {theme}. Expect misdirection."
 ];
 
 const TACTICAL_TEMPLATES = [
-  "Forward elements confirm enemy presence near {place}. Visual contact established: {a} vs {b}.",
-  "Auspex lock achieved at {place}. Immediate threat confirmed. Matchup authorized: {a} against {b}.",
-  "Confirmed sightings at {place}. This is no longer conjecture — {a} will clash with {b}."
+  "Forward elements confirm enemy presence near {place}. Contact: {a} vs {b}.",
+  "Auspex lock achieved at {place}. Matchup authorized: {a} against {b}.",
+  "Confirmed sightings at {place}. {a} will clash with {b}."
 ];
 
 const THEMES_BY_BIOME = {
@@ -1288,18 +1002,15 @@ function bestContextPlace(a, b){
     return { place: parts.join(" — "), biomeId: h.biome.id, key: best.k, site: h.important || null };
   }
 
-  const mq = Math.round((a.q + b.q)/2);
-  const mr = Math.round((a.r + b.r)/2);
-  const mk = keyOf(mq,mr);
-  const mh = hexes.get(mk) || hexes.get(keyOf(a.q,a.r));
-  return { place: mh ? mh.biome.label : "Unknown Sector", biomeId: mh ? mh.biome.id : "plains", key: mh ? mk : keyOf(a.q,a.r), site: mh?.important || null };
+  const mk = keyOf(a.q,a.r);
+  const mh = hexes.get(mk);
+  return { place: mh ? mh.biome.label : "Unknown Sector", biomeId: mh ? mh.biome.id : "plains", key: mk, site: mh?.important || null };
 }
 
 function generateStrategicRumor(a, b){
   const ctx = bestContextPlace(a,b);
   const themePool = THEMES_BY_BIOME[ctx.biomeId] || THEMES_BY_BIOME.plains;
   const tpl = pick(STRATEGIC_TEMPLATES);
-
   const base = tpl.replace("{place}", ctx.place).replace("{theme}", pick(themePool));
   const extra = ctx.site ? ` Value at stake: ${ctx.site.value}.` : "";
   return { text: base + extra, locationKey: ctx.key };
@@ -1315,6 +1026,7 @@ function generateTacticalRumor(a, b){
 function checkRumorsAfterMove(movedToken){
   if(!movedToken || movedToken.status !== "available") return;
 
+  // Tactical lock: <=2 + LOS
   const candidatesTac = [];
   for(const other of tokens){
     if(other.id === movedToken.id) continue;
@@ -1325,6 +1037,7 @@ function checkRumorsAfterMove(movedToken){
     if(d <= 2 && hasLOS(movedToken.q, movedToken.r, other.q, other.r)) candidatesTac.push({ other, d });
   }
   candidatesTac.sort((a,b)=>a.d-b.d);
+
   if(candidatesTac.length){
     const enemy = candidatesTac[0].other;
     const r = generateTacticalRumor(movedToken, enemy);
@@ -1334,18 +1047,17 @@ function checkRumorsAfterMove(movedToken){
 
     tacticalMatchups.push({
       id: `M-${round}-${tacticalMatchups.length+1}`,
-      tokenA: movedToken.id,
-      tokenB: enemy.id,
+      aId: movedToken.id,
+      bId: enemy.id,
       locationKey: r.locationKey,
-      text: r.text,
-      createdAt: Date.now()
+      text: r.text
     });
 
-    toast(`TACTICAL CONTACT: matchup locked → ${movedToken.faction} vs ${enemy.faction}`);
-    renderAll();
+    toast(`TACTICAL CONTACT: ${movedToken.faction} vs ${enemy.faction}`);
     return;
   }
 
+  // Strategic: <=4 (once per pair per round)
   const candidatesStrat = [];
   for(const other of tokens){
     if(other.id === movedToken.id) continue;
@@ -1360,22 +1072,21 @@ function checkRumorsAfterMove(movedToken){
     }
   }
   candidatesStrat.sort((a,b)=>a.d-b.d);
+
   if(candidatesStrat.length){
     const c = candidatesStrat[0];
     seenStrategicPairs.add(c.pairKey);
-
     const r = generateStrategicRumor(movedToken, c.other);
+
     strategicRumors.push({
       id: `S-${round}-${strategicRumors.length+1}`,
-      tokenA: movedToken.id,
-      tokenB: c.other.id,
-      text: r.text,
+      aId: movedToken.id,
+      bId: c.other.id,
       locationKey: r.locationKey,
-      createdAt: Date.now()
+      text: r.text
     });
 
-    toast(`Strategic pressure (≤4): ${movedToken.faction} near ${c.other.faction}`);
-    renderAll();
+    toast(`Strategic pressure: ${movedToken.short} near ${c.other.short}`);
   }
 }
 
@@ -1395,7 +1106,6 @@ function biomeStyle(h){
     case "hive":     fill="rgba(255,255,255,0.06)"; stroke="rgba(255,255,255,0.26)"; break;
     case "ash":      fill="rgba(204,59,59,0.06)"; stroke="rgba(204,59,59,0.22)"; break;
     case "badlands": fill="rgba(209,161,75,0.05)"; stroke="rgba(209,161,75,0.22)"; break;
-    default: break;
   }
 
   if(h.special?.id === "blackout"){ stroke="rgba(204,59,59,0.42)"; fill="rgba(0,0,0,0.34)"; }
@@ -1406,9 +1116,10 @@ function biomeStyle(h){
 
 function drawReachableOverlay(){
   if(!reachable || reachable.size === 0) return;
-
   const tok = getSelectedToken();
-  const startKey = tok ? keyOf(tok.q,tok.r) : null;
+  if(!tok || tok.movePoints == null) return;
+
+  const startKey = keyOf(tok.q,tok.r);
 
   for(const [k,d] of reachable.entries()){
     if(k === startKey) continue;
@@ -1416,13 +1127,13 @@ function drawReachableOverlay(){
     if(!h) continue;
 
     const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
-
     const poly = document.createElementNS(svgNS, "polygon");
     poly.setAttribute("points", pts);
 
-    const isBonus = tok?.team === TEAM.CHAOS && tok?._bonusOnly?.has(k);
-    poly.setAttribute("fill", isBonus ? "rgba(209,161,75,0.10)" : "rgba(74,166,255,0.08)");
-    poly.setAttribute("stroke", isBonus ? "rgba(209,161,75,0.38)" : "rgba(74,166,255,0.34)");
+    // Chaos destinations beyond base are shown in gold tint to hint “conditional bonus”
+    const chaosTint = (tok.team===TEAM.CHAOS && d > tok.movePoints);
+    poly.setAttribute("fill", chaosTint ? "rgba(209,161,75,0.10)" : "rgba(74,166,255,0.08)");
+    poly.setAttribute("stroke", chaosTint ? "rgba(209,161,75,0.36)" : "rgba(74,166,255,0.34)");
     poly.setAttribute("stroke-width", "2.0");
     poly.setAttribute("pointer-events", "none");
 
@@ -1431,6 +1142,8 @@ function drawReachableOverlay(){
 }
 
 function drawHexes(){
+  computeStarControl();
+
   for(const [k,h] of hexes.entries()){
     const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
     const st = biomeStyle(h);
@@ -1443,17 +1156,13 @@ function drawHexes(){
     poly.setAttribute("data-hex", k);
 
     poly.addEventListener("click", (e) => { e.stopPropagation(); onHexClicked(k); });
-    poly.addEventListener("mousemove", (e) => { e.stopPropagation(); onHexHover(k); });
 
     svg.appendChild(poly);
 
     const c = axialToPixel(h.q,h.r);
 
-    // Terrain chip (top-left)
+    // Terrain chip
     const chipStyle = BIOME_CHIP[h.biome.id] || BIOME_CHIP.plains;
-    const chip = document.createElementNS(svgNS, "g");
-    chip.setAttribute("pointer-events", "none");
-
     const chipX = c.x - 26;
     const chipY = c.y - 26;
 
@@ -1466,14 +1175,16 @@ function drawHexes(){
     chipBg.setAttribute("fill", "rgba(0,0,0,0.34)");
     chipBg.setAttribute("stroke", "rgba(255,255,255,0.12)");
     chipBg.setAttribute("stroke-width", "1");
-    chip.appendChild(chipBg);
+    chipBg.setAttribute("pointer-events", "none");
+    svg.appendChild(chipBg);
 
     const dot = document.createElementNS(svgNS, "circle");
     dot.setAttribute("cx", chipX + 9);
     dot.setAttribute("cy", chipY + 8);
     dot.setAttribute("r", 3.2);
     dot.setAttribute("fill", chipStyle.dot);
-    chip.appendChild(dot);
+    dot.setAttribute("pointer-events", "none");
+    svg.appendChild(dot);
 
     const chipText = document.createElementNS(svgNS, "text");
     chipText.setAttribute("x", chipX + 16);
@@ -1481,24 +1192,37 @@ function drawHexes(){
     chipText.setAttribute("font-size", "9.5");
     chipText.setAttribute("fill", chipStyle.text);
     chipText.setAttribute("class", "mono");
+    chipText.setAttribute("pointer-events", "none");
     chipText.textContent = h.biome.abbr;
-    chip.appendChild(chipText);
+    svg.appendChild(chipText);
 
-    svg.appendChild(chip);
+    // Special markers
+    if(h.special?.id === "blackout"){
+      const t = document.createElementNS(svgNS, "text");
+      t.setAttribute("x", c.x + 22);
+      t.setAttribute("y", c.y + 12);
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("font-size", "9.5");
+      t.setAttribute("fill", "rgba(255,255,255,0.72)");
+      t.setAttribute("class","mono");
+      t.setAttribute("pointer-events","none");
+      t.textContent = "JAM";
+      svg.appendChild(t);
+    }
+    if(h.special?.id === "exclusion"){
+      const t = document.createElementNS(svgNS, "text");
+      t.setAttribute("x", c.x + 22);
+      t.setAttribute("y", c.y + 12);
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("font-size", "10.5");
+      t.setAttribute("fill", "rgba(255,255,255,0.78)");
+      t.setAttribute("class","mono");
+      t.setAttribute("pointer-events","none");
+      t.textContent = "X";
+      svg.appendChild(t);
+    }
 
-    // coords (dim)
-    const label = document.createElementNS(svgNS, "text");
-    label.setAttribute("x", c.x);
-    label.setAttribute("y", c.y + 18);
-    label.setAttribute("text-anchor", "middle");
-    label.setAttribute("font-size", "8.5");
-    label.setAttribute("fill", "rgba(255,255,255,0.46)");
-    label.setAttribute("class","mono");
-    label.setAttribute("pointer-events","none");
-    label.textContent = `${h.q},${h.r}`;
-    svg.appendChild(label);
-
-    // ★ + tag + control ring
+    // ★ + control ring
     if(h.important){
       const star = document.createElementNS(svgNS, "text");
       star.setAttribute("x", c.x);
@@ -1540,106 +1264,6 @@ function drawHexes(){
         svg.appendChild(ring);
       }
     }
-
-    if(h.special?.id === "blackout"){
-      const t = document.createElementNS(svgNS, "text");
-      t.setAttribute("x", c.x + 22);
-      t.setAttribute("y", c.y + 12);
-      t.setAttribute("text-anchor", "middle");
-      t.setAttribute("font-size", "9.5");
-      t.setAttribute("fill", "rgba(255,255,255,0.72)");
-      t.setAttribute("class","mono");
-      t.setAttribute("pointer-events","none");
-      t.textContent = "JAM";
-      svg.appendChild(t);
-    }
-    if(h.special?.id === "exclusion"){
-      const t = document.createElementNS(svgNS, "text");
-      t.setAttribute("x", c.x + 22);
-      t.setAttribute("y", c.y + 12);
-      t.setAttribute("text-anchor", "middle");
-      t.setAttribute("font-size", "10.5");
-      t.setAttribute("fill", "rgba(255,255,255,0.78)");
-      t.setAttribute("class","mono");
-      t.setAttribute("pointer-events","none");
-      t.textContent = "X";
-      svg.appendChild(t);
-    }
-  }
-}
-
-function drawPathPreview(){
-  if(!hoverPath || hoverPath.length < 2) return;
-
-  const pts = hoverPath.map(h => {
-    const c = axialToPixel(h.q, h.r);
-    return `${c.x.toFixed(2)},${c.y.toFixed(2)}`;
-  }).join(" ");
-
-  const outline = document.createElementNS(svgNS, "polyline");
-  outline.setAttribute("points", pts);
-  outline.setAttribute("fill", "none");
-  outline.setAttribute("stroke", "rgba(0,0,0,0.55)");
-  outline.setAttribute("stroke-width", "6");
-  outline.setAttribute("stroke-linecap", "round");
-  outline.setAttribute("stroke-linejoin", "round");
-  outline.setAttribute("pointer-events", "none");
-  svg.appendChild(outline);
-
-  const line = document.createElementNS(svgNS, "polyline");
-  line.setAttribute("points", pts);
-  line.setAttribute("fill", "none");
-  line.setAttribute("stroke", "rgba(255,255,255,0.75)");
-  line.setAttribute("stroke-width", "2.4");
-  line.setAttribute("stroke-linecap", "round");
-  line.setAttribute("stroke-linejoin", "round");
-  line.setAttribute("pointer-events", "none");
-  svg.appendChild(line);
-}
-
-function drawHighlights(){
-  if(plannedDestKey){
-    const h = hexes.get(plannedDestKey);
-    if(h){
-      const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
-      const poly = document.createElementNS(svgNS, "polygon");
-      poly.setAttribute("points", pts);
-      poly.setAttribute("fill", "rgba(74,166,255,0.10)");
-      poly.setAttribute("stroke", "rgba(74,166,255,0.55)");
-      poly.setAttribute("stroke-width", "2.6");
-      poly.setAttribute("pointer-events", "none");
-      svg.appendChild(poly);
-    }
-  }
-
-  const tok = getSelectedToken();
-  if(tok){
-    const k = keyOf(tok.q,tok.r);
-    const h = hexes.get(k);
-    if(h){
-      const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
-      const poly = document.createElementNS(svgNS, "polygon");
-      poly.setAttribute("points", pts);
-      poly.setAttribute("fill", "transparent");
-      poly.setAttribute("stroke", "rgba(255,255,255,0.65)");
-      poly.setAttribute("stroke-width", "2.4");
-      poly.setAttribute("pointer-events", "none");
-      svg.appendChild(poly);
-    }
-  }
-
-  if(hoverKey){
-    const h = hexes.get(hoverKey);
-    if(h){
-      const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
-      const poly = document.createElementNS(svgNS, "polygon");
-      poly.setAttribute("points", pts);
-      poly.setAttribute("fill", "transparent");
-      poly.setAttribute("stroke", "rgba(209,161,75,0.55)");
-      poly.setAttribute("stroke-width", "2.0");
-      poly.setAttribute("pointer-events", "none");
-      svg.appendChild(poly);
-    }
   }
 }
 
@@ -1680,156 +1304,226 @@ function drawTokens(){
   }
 }
 
-function renderMap(){
-  computeStarControl();
-  clearSVG();
-  drawHexes();
-  drawReachableOverlay();
-  drawPathPreview();
-  drawTokens();
-  drawHighlights();
-}
+function drawSelection(){
+  const tok = getSelectedToken();
+  if(!tok) return;
 
-/* ===========================
-   LEFT UI
-=========================== */
-function getSelectedToken(){ return tokens.find(t=>t.id===selectedTokenId) || null; }
+  // highlight selected hex
+  const k = keyOf(tok.q,tok.r);
+  const h = hexes.get(k);
+  if(h){
+    const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+    const poly = document.createElementNS(svgNS, "polygon");
+    poly.setAttribute("points", pts);
+    poly.setAttribute("fill", "transparent");
+    poly.setAttribute("stroke", "rgba(255,255,255,0.65)");
+    poly.setAttribute("stroke-width", "2.4");
+    poly.setAttribute("pointer-events", "none");
+    svg.appendChild(poly);
+  }
 
-function renderTokenList(){
-  const list = $("tokenList");
-  list.innerHTML = "";
-  for(const tok of tokens){
-    const card = document.createElement("div");
-    card.className = "tokenCard" + (tok.id===selectedTokenId ? " active" : "");
-    card.addEventListener("click", ()=>selectToken(tok.id));
-
-    const meta = document.createElement("div");
-    meta.className = "tokenMeta";
-    const name = document.createElement("div");
-    name.className = "tokenName";
-    name.textContent = tok.faction;
-    const sub = document.createElement("div");
-    sub.className = "tokenSub mono";
-    sub.textContent = `(${tok.team}) @ ${tok.q},${tok.r} • ${tok.status}`;
-    meta.appendChild(name);
-    meta.appendChild(sub);
-
-    const badge = document.createElement("div");
-    badge.className = "badge " + (teamColor(tok.team).badge || "");
-    badge.textContent = tok.short;
-
-    card.appendChild(meta);
-    card.appendChild(badge);
-    list.appendChild(card);
+  // highlight planned dest
+  if(plannedDestKey){
+    const d = hexes.get(plannedDestKey);
+    if(d){
+      const pts = hexCorners(d.q,d.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+      const poly = document.createElementNS(svgNS, "polygon");
+      poly.setAttribute("points", pts);
+      poly.setAttribute("fill", "rgba(74,166,255,0.10)");
+      poly.setAttribute("stroke", "rgba(74,166,255,0.55)");
+      poly.setAttribute("stroke-width", "2.6");
+      poly.setAttribute("pointer-events", "none");
+      svg.appendChild(poly);
+    }
   }
 }
 
-function renderLogs(){
-  const s = strategicRumors.map(r => {
-    const a = tokens.find(t=>t.id===r.tokenA);
-    const b = tokens.find(t=>t.id===r.tokenB);
-    const loc = hexes.get(r.locationKey);
-    const place = loc?.important ? `★ ${loc.important.label} (${loc.important.tag})` : (loc?.biome?.label || "Unknown");
-    return `• [${r.id}] ${a?.short} ↔ ${b?.short} @ ${place}\n  ${r.text}`;
-  }).join("\n\n");
-
-  const t = tacticalMatchups.map(m => {
-    const a = tokens.find(t=>t.id===m.tokenA);
-    const b = tokens.find(t=>t.id===m.tokenB);
-    const loc = hexes.get(m.locationKey);
-    const place = loc?.important ? `★ ${loc.important.label} (${loc.important.tag})` : (loc?.biome?.label || "Unknown");
-    return `• [${m.id}] MATCHUP LOCKED @ ${place}\n  ${a?.faction} vs ${b?.faction}\n  ${m.text}`;
-  }).join("\n\n");
-
-  $("logStrategic").textContent = s || "—";
-  $("logTactical").textContent = t || "—";
-}
-
-function renderSelected(){
-  const tok = getSelectedToken();
-  $("selFaction").textContent = tok ? tok.faction : "—";
-  $("selTeam").textContent = tok ? tok.team : "—";
-  $("selHex").textContent = tok ? `${tok.q},${tok.r}` : "—";
-  $("selStatus").textContent = tok ? tok.status : "—";
-
-  $("selMoveBig").textContent = tok && tok.movePoints != null ? String(tok.movePoints) : "—";
-  $("selDest").textContent = plannedDestKey || "—";
-  $("selReachCount").textContent = reachable.size ? `${reachable.size} hexes` : "—";
-
-  // stepper checks
-  const hasTok = !!tok;
-  const hasRoll = !!tok && tok.movePoints != null && tok.moveFrom != null;
-  const hasDest = !!plannedDestKey && reachable.has(plannedDestKey);
-
-  $("chk1").classList.toggle("on", hasTok);
-  $("chk2").classList.toggle("on", hasRoll);
-  $("chk3").classList.toggle("on", hasDest);
-
-  $("btnRollMove").disabled = !tok || tok.status!=="available";
-  $("btnClearMove").disabled = !tok;
-}
-
-function renderAll(){
-  renderTokenList();
-  renderSelected();
-  renderStarControl();
-  renderLogs();
-  renderMap();
+function renderMap(){
+  clearSVG();
+  drawHexes();
+  drawReachableOverlay();
+  drawTokens();
+  drawSelection();
 }
 
 /* ===========================
-   INTERACTION
+   PLAYER HUD RENDER
+=========================== */
+function renderTokenSelect(){
+  const sel = $("tokenSelect");
+  sel.innerHTML = "";
+
+  for(const tok of tokens){
+    const opt = document.createElement("option");
+    opt.value = tok.id;
+    opt.textContent = `${tok.faction} (${tok.team}) — ${tok.short}`;
+    sel.appendChild(opt);
+  }
+  sel.value = selectedTokenId || tokens[0]?.id || "";
+}
+
+function renderPlayerHUD(){
+  const tok = getSelectedToken();
+  if(!tok){
+    $("tokenStatus").textContent = "—";
+    $("movePointsBig").textContent = "—";
+    $("playerHint").textContent = "Select a token to begin.";
+    $("btnRollMove").disabled = true;
+    $("btnClearMove").disabled = true;
+    return;
+  }
+
+  const onHex = keyOf(tok.q,tok.r);
+  const engaged = tok.status !== "available";
+
+  $("tokenStatus").textContent =
+    `${tok.team} • ${tok.short} @ ${onHex} • ` + (engaged ? "ENGAGED (matched)" : "READY");
+
+  $("movePointsBig").textContent = (tok.movePoints == null ? "—" : String(tok.movePoints));
+
+  if(engaged){
+    $("playerHint").textContent = "This token is engaged this round. Watch Round Board for matchups.";
+  }else if(tok.movePoints == null){
+    $("playerHint").textContent = "Roll movement, then click any highlighted hex to move.";
+  }else{
+    if(tok.team === TEAM.CHAOS){
+      $("playerHint").textContent = "Click a highlighted hex. Gold-tinted reach is conditional (+1 only if you move closer to nearest enemy).";
+    }else{
+      $("playerHint").textContent = "Click a highlighted hex to move. Tactical contact locks at range 2 + LOS.";
+    }
+  }
+
+  $("btnRollMove").disabled = engaged;
+  $("btnClearMove").disabled = false;
+}
+
+/* ===========================
+   ROUND BOARD RENDER
+=========================== */
+function renderMatchups(){
+  const el = $("matchupList");
+  el.innerHTML = "";
+
+  if(!tacticalMatchups.length){
+    const empty = document.createElement("div");
+    empty.className = "box";
+    empty.innerHTML = `<div class="sub">No locked games yet.</div>`;
+    el.appendChild(empty);
+    return;
+  }
+
+  for(const m of tacticalMatchups){
+    const a = tokens.find(t=>t.id===m.aId);
+    const b = tokens.find(t=>t.id===m.bId);
+    const loc = hexes.get(m.locationKey);
+    const place = loc?.important ? `★ ${loc.important.label} (${loc.important.tag})` : (loc?.biome?.label || "Unknown");
+
+    const card = document.createElement("div");
+    card.className = "item";
+    card.innerHTML = `
+      <div class="itemTop">
+        <div class="itemTitle">${a?.faction || "?"} vs ${b?.faction || "?"}</div>
+        <div class="chip gold">${m.id}</div>
+      </div>
+      <div class="itemSub">${m.text}</div>
+      <div class="smallDim mono">Location: ${place} • Hex ${m.locationKey}</div>
+    `;
+    el.appendChild(card);
+  }
+}
+
+function renderRumors(){
+  const el = $("rumorList");
+  el.innerHTML = "";
+
+  if(!strategicRumors.length){
+    const empty = document.createElement("div");
+    empty.className = "box";
+    empty.innerHTML = `<div class="sub">No strategic pressure signals yet.</div>`;
+    el.appendChild(empty);
+    return;
+  }
+
+  for(const r of strategicRumors.slice(-6).reverse()){
+    const a = tokens.find(t=>t.id===r.aId);
+    const b = tokens.find(t=>t.id===r.bId);
+    const loc = hexes.get(r.locationKey);
+    const place = loc?.important ? `★ ${loc.important.label} (${loc.important.tag})` : (loc?.biome?.label || "Unknown");
+
+    const card = document.createElement("div");
+    card.className = "item";
+    card.innerHTML = `
+      <div class="itemTop">
+        <div class="itemTitle">${a?.short || "?"} ↔ ${b?.short || "?"}</div>
+        <div class="chip">${r.id}</div>
+      </div>
+      <div class="itemSub">${r.text}</div>
+      <div class="smallDim mono">Near: ${place} • Hex ${r.locationKey}</div>
+    `;
+    el.appendChild(card);
+  }
+}
+
+function renderStars(){
+  computeStarControl();
+  const el = $("starList");
+  el.innerHTML = "";
+
+  const stars = [...hexes.entries()]
+    .filter(([k,h]) => h.important)
+    .map(([k,h]) => ({ key:k, hex:h, ctl: starControl.get(k) }))
+    .sort((a,b) => (b.hex.important.importance||0) - (a.hex.important.importance||0));
+
+  if(!stars.length){
+    const empty = document.createElement("div");
+    empty.className = "box";
+    empty.innerHTML = `<div class="sub">No star sites found (reroll terrain).</div>`;
+    el.appendChild(empty);
+    return;
+  }
+
+  for(const s of stars){
+    const owner = s.ctl?.owner ?? null;
+
+    let chipClass = "chip";
+    let chipText = "Unheld";
+    if(owner === "Contested"){ chipClass = "chip gold"; chipText="Contested"; }
+    else if(owner === TEAM.IMPERIUM){ chipClass="chip blue"; chipText="Imperium"; }
+    else if(owner === TEAM.XENOS){ chipClass="chip green"; chipText="Xenos"; }
+    else if(owner === TEAM.CHAOS){ chipClass="chip red"; chipText="Chaos"; }
+
+    const occ = (s.ctl?.occupants || []).map(o => o.short).join(", ");
+
+    const card = document.createElement("div");
+    card.className = "item";
+    card.innerHTML = `
+      <div class="starRow">
+        <div class="starIcon">★</div>
+        <div style="flex:1 1 auto; min-width:0;">
+          <div class="itemTop">
+            <div class="itemTitle">${s.hex.important.label} <span class="mono">(${s.hex.important.tag})</span></div>
+            <div class="${chipClass}">${chipText}</div>
+          </div>
+          <div class="itemSub">${s.hex.important.value} — ${s.hex.important.hook}</div>
+          <div class="smallDim mono">Hex ${s.key} • Occupants: ${occ || "—"}</div>
+        </div>
+      </div>
+    `;
+    el.appendChild(card);
+  }
+}
+
+function renderRoundChip(){
+  $("roundChip").textContent = `Round ${round}`;
+}
+
+/* ===========================
+   CORE INTERACTION
 =========================== */
 function selectToken(id){
   selectedTokenId = id;
   plannedDestKey = null;
-  hoverKey = null;
-  hoverPath = [];
-  hoverDistance = null;
-
   computeReachableForSelected();
-  renderAll();
-}
-
-function onHexHover(hexKey){
-  hoverKey = hexKey;
-
-  const h = hexes.get(hexKey);
-  const parts = [];
-  if(h){
-    let terrainLine = h.biome.label;
-    if(h.special?.id === "blackout") terrainLine += " • JAM";
-    if(h.special?.id === "exclusion") terrainLine += " • X";
-    parts.push(terrainLine);
-
-    if(h.important){
-      parts.push(`★ ${h.important.label} (${h.important.tag})`);
-      parts.push(h.important.value);
-    }
-  }
-
-  const tok = getSelectedToken();
-  if(tok && tok.movePoints != null && tok.moveFrom){
-    const startKey = keyOf(tok.q, tok.r);
-    if(reachable.has(hexKey)){
-      hoverDistance = reachable.get(hexKey);
-
-      let parent = tok._parentBase;
-      if(tok.team === TEAM.CHAOS && tok._bonusOnly?.has(hexKey)){
-        parent = tok._parentBonus || tok._parentBase;
-      }
-      hoverPath = reconstructPath(parent, startKey, hexKey);
-      parts.push(`Dist ${hoverDistance}`);
-    }else{
-      hoverDistance = null;
-      hoverPath = [];
-    }
-  }else{
-    hoverDistance = null;
-    hoverPath = [];
-  }
-
-  $("selHover").textContent = parts.join(" | ") || "—";
   renderAll();
 }
 
@@ -1839,27 +1533,30 @@ function onHexClicked(hexKey){
 
   plannedDestKey = hexKey;
 
+  if(tok.status !== "available"){
+    toast("This token is engaged this round.");
+    renderAll();
+    return;
+  }
+
   if(tok.movePoints == null || !tok.moveFrom){
-    toast("Destination selected. Roll movement to execute a move.");
-    renderSelected();
-    renderMap();
+    toast("Roll movement first, then click a highlighted hex.");
+    renderAll();
     return;
   }
 
   if(!reachable.has(hexKey)){
-    toast("Not reachable this move (must be highlighted).");
-    renderSelected();
-    renderMap();
+    toast("Not reachable (must be highlighted).");
+    renderAll();
     return;
   }
 
-  if(tok.team === TEAM.CHAOS && tok._bonusOnly?.has(hexKey)){
-    const eff = chaosEffectiveMove(tok, hexKey);
-    const dist = reachable.get(hexKey);
-    if(dist > eff){
-      toast("Chaos bonus not active for that destination (must move closer to nearest enemy).");
-      renderSelected();
-      renderMap();
+  // Chaos conditional: if moving beyond base, validate “closer to enemy”
+  const dist = reachable.get(hexKey);
+  if(tok.team === TEAM.CHAOS && dist > tok.movePoints){
+    if(!chaosEffectiveBonusActive(tok, hexKey)){
+      toast("Chaos +1 not active (destination must be closer to nearest enemy). Pick another hex.");
+      renderAll();
       return;
     }
   }
@@ -1870,8 +1567,9 @@ function onHexClicked(hexKey){
 
   tok.movePoints = null;
   tok.moveFrom = null;
+  reachable = new Map();
+  plannedDestKey = null;
 
-  clearMovementUX();
   checkRumorsAfterMove(tok);
   renderAll();
 }
@@ -1879,6 +1577,10 @@ function onHexClicked(hexKey){
 /* ===========================
    BUTTONS
 =========================== */
+$("tokenSelect").addEventListener("change", (e) => {
+  selectToken(e.target.value);
+});
+
 $("btnRollMove").addEventListener("click", () => {
   const tok = getSelectedToken();
   if(!tok) return;
@@ -1891,9 +1593,22 @@ $("btnClearMove").addEventListener("click", () => {
   if(!tok) return;
   tok.movePoints = null;
   tok.moveFrom = null;
-  clearMovementUX();
+  reachable = new Map();
+  plannedDestKey = null;
   toast("Move cleared.");
   renderAll();
+});
+
+$("btnFocus").addEventListener("click", () => {
+  const tok = getSelectedToken();
+  if(!tok) return;
+  focusOnHex(keyOf(tok.q,tok.r));
+  toast("Focused on your token.");
+});
+
+$("btnCenter").addEventListener("click", () => {
+  resetView();
+  toast("View centered.");
 });
 
 $("btnNewRound").addEventListener("click", () => {
@@ -1907,8 +1622,34 @@ $("btnNewRound").addEventListener("click", () => {
     t.movePoints = null;
     t.moveFrom = null;
   }
-  clearMovementUX();
+  reachable = new Map();
+  plannedDestKey = null;
+
   toast(`New round started: Round ${round}`);
+  renderAll();
+});
+
+$("btnRegenTerrain").addEventListener("click", () => {
+  generateHexes();
+
+  // Ensure tokens not stranded on blocked movement
+  for(const tok of tokens){
+    const h = hexes.get(keyOf(tok.q,tok.r));
+    if(h?.special?.blocks_movement){
+      const nbs = neighborsOf(tok.q,tok.r);
+      let moved=false;
+      for(const nb of nbs){
+        const nh = hexes.get(keyOf(nb.q,nb.r));
+        if(nh && !nh.special.blocks_movement){
+          tok.q=nb.q; tok.r=nb.r; moved=true; break;
+        }
+      }
+      if(!moved){ tok.q=0; tok.r=0; }
+    }
+  }
+
+  computeReachableForSelected();
+  toast("Terrain randomized (tokens preserved).");
   renderAll();
 });
 
@@ -1926,43 +1667,13 @@ $("btnResetMap").addEventListener("click", () => {
   renderAll();
 });
 
-$("btnRegenTerrain").addEventListener("click", () => {
-  generateHexes();
-  for(const tok of tokens){
-    const k = keyOf(tok.q,tok.r);
-    const h = hexes.get(k);
-    if(h?.special?.blocks_movement){
-      const nbs = neighborsOf(tok.q,tok.r);
-      let moved=false;
-      for(const nb of nbs){
-        const nh = hexes.get(keyOf(nb.q,nb.r));
-        if(nh && !nh.special.blocks_movement){
-          tok.q=nb.q; tok.r=nb.r; moved=true; break;
-        }
-      }
-      if(!moved){ tok.q=0; tok.r=0; }
-    }
-  }
-  computeReachableForSelected();
-  toast("Terrain randomized (tokens preserved).");
-  renderAll();
-});
-
-$("btnCenter").addEventListener("click", () => { resetView(); toast("View centered."); });
-$("btnFocusSelected").addEventListener("click", () => {
-  const tok = getSelectedToken();
-  if(!tok) return;
-  focusOnHex(keyOf(tok.q,tok.r));
-  toast("Focused on selected token.");
-});
-
 $("btnExport").addEventListener("click", async () => {
   computeStarControl();
   const exportObj = {
     round,
     map: { gridRadius: GRID_RADIUS },
     tokens: tokens.map(t=>({ id:t.id, team:t.team, faction:t.faction, short:t.short, q:t.q, r:t.r, status:t.status })),
-    starControl: [...starControl.entries()].map(([k,v]) => ({ key:k, owner:v.owner, occupants:v.occupants.map(o=>o.short) })),
+    starControl: [...starControl.entries()].map(([k,v]) => ({ key:k, owner:v.owner, occupants:(v.occupants||[]).map(o=>o.short) })),
     strategicRumors,
     tacticalMatchups
   };
@@ -1977,37 +1688,11 @@ $("btnExport").addEventListener("click", async () => {
 });
 
 /* ===========================
-   TABS
-=========================== */
-function setupTabs(){
-  const tabs = document.querySelectorAll(".tab");
-  tabs.forEach(t => {
-    t.addEventListener("click", () => {
-      const target = t.getAttribute("data-tab");
-
-      const container = t.closest(".panel");
-      const siblingTabs = container.querySelectorAll(".tab");
-      siblingTabs.forEach(st => st.classList.remove("active"));
-      t.classList.add("active");
-
-      // hide all contents in this panel
-      const contents = container.querySelectorAll(".tabContent");
-      contents.forEach(c => c.style.display = "none");
-
-      // show target
-      const el = document.getElementById(target);
-      if(el) el.style.display = "";
-    });
-  });
-}
-
-/* ===========================
-   ZOOM + PAN (SVG viewBox)
+   VIEWBOX ZOOM + PAN
 =========================== */
 let vb = { x:0, y:0, w:1200, h:860 };
 function applyViewBox(){ svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
 function resetView(){ vb = { x:0, y:0, w:1200, h:860 }; applyViewBox(); }
-resetView();
 
 function svgPointFromClient(clientX, clientY){
   const rect = svg.getBoundingClientRect();
@@ -2069,21 +1754,34 @@ function focusOnHex(hexKey){
   const h = hexes.get(hexKey);
   if(!h) return;
   const c = axialToPixel(h.q,h.r);
-  // Keep zoom, just pan center
   vb.x = c.x - vb.w/2;
   vb.y = c.y - vb.h/2;
   applyViewBox();
 }
 
 /* ===========================
+   RENDER ALL
+=========================== */
+function renderAll(){
+  renderRoundChip();
+  renderTokenSelect();
+  renderPlayerHUD();
+  renderMatchups();
+  renderRumors();
+  renderStars();
+  renderMap();
+}
+
+/* ===========================
    INIT
 =========================== */
 function init(){
-  setupTabs();
   generateHexes();
   placeTokens();
+  resetView();
+  computeReachableForSelected();
   renderAll();
-  toast("UI reorganized: Actions (left), Map (center), Intel (right).");
+  toast("Player-facing layout loaded: HUD (left), Map (center), Round Board (right). GM tools are hidden below.");
 }
 init();
 </script>
