@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Crusade Campaign Kit — Player HUD</title>
+  <title>Crusade Campaign Kit — Hex Map + Tokens + Rumors</title>
   <style>
     :root{
       --bg0:#07080b;
       --bg1:#0b0e14;
+
       --ink:#e9e6dc;
       --muted:#b7b1a2;
       --dim:#7d776b;
@@ -60,13 +61,8 @@
       .mapPanel svg{ height: min(70vh, 920px) !important; }
     }
 
-    .title{
-      font-size:12px;
-      letter-spacing:0.16em;
-      text-transform:uppercase;
-      color:var(--muted);
-      font-weight:900;
-    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
     .bigTitle{
       margin:0;
       font-size:14px;
@@ -79,7 +75,13 @@
       font-size:12px;
       line-height:1.35;
     }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    .title{
+      font-size:12px;
+      letter-spacing:0.16em;
+      text-transform:uppercase;
+      color:var(--muted);
+      font-weight:900;
+    }
 
     button{
       appearance:none;
@@ -115,7 +117,6 @@
       transform:none;
     }
 
-    .pad{ padding:12px 12px; }
     .section{ padding:12px 12px; border-top:1px solid rgba(255,255,255,0.10); }
     .section:first-child{ border-top:none; }
     .stack{ display:grid; gap:10px; }
@@ -128,7 +129,7 @@
       padding:10px 10px;
     }
 
-    /* Player HUD */
+    /* HUD */
     .hudHeader{
       padding:14px 14px;
       border-bottom:1px solid rgba(255,255,255,0.10);
@@ -159,6 +160,7 @@
       border-color: rgba(74,166,255,0.45);
       box-shadow: 0 0 0 2px rgba(74,166,255,0.12);
     }
+
     .moveBig{
       display:flex;
       align-items:center;
@@ -197,7 +199,7 @@
       align-items:center;
     }
 
-    /* Round Board */
+    /* Round board */
     .boardHeader{
       padding:14px 14px;
       border-bottom:1px solid rgba(255,255,255,0.10);
@@ -216,16 +218,14 @@
       background: rgba(255,255,255,0.06);
       color: var(--muted);
       font-weight:900;
+      white-space:nowrap;
     }
     .chip.blue{ border-color: rgba(74,166,255,0.35); color:#d8efff; }
     .chip.green{ border-color: rgba(63,191,127,0.35); color:#d9fff0; }
     .chip.red{ border-color: rgba(204,59,59,0.35); color:#ffd6d6; }
     .chip.gold{ border-color: rgba(209,161,75,0.40); color:#f2e6cf; }
 
-    .list{
-      display:grid;
-      gap:10px;
-    }
+    .list{ display:grid; gap:10px; }
     .item{
       border:1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.22);
@@ -282,7 +282,7 @@
       align-items:flex-start;
     }
 
-    /* Map Panel */
+    /* Map */
     .mapHeader{
       padding:12px 14px;
       border-bottom:1px solid rgba(255,255,255,0.10);
@@ -307,7 +307,7 @@
     }
 
     .focusCard{
-      max-width: 520px;
+      max-width: 560px;
       border:1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.22);
       border-radius: 14px;
@@ -403,7 +403,6 @@
     }
     .gmBody .left{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .gmBody .right{ color:var(--muted); font-size:12px; line-height:1.4; }
-
   </style>
 </head>
 <body>
@@ -427,7 +426,7 @@
           <div class="moveBig">
             <div>
               <div class="k">Move Points</div>
-              <div class="sub">d3 + team bonus</div>
+              <div class="sub">d3 + team bonus (+ star bonuses where applicable)</div>
             </div>
             <div class="v mono" id="movePointsBig">—</div>
           </div>
@@ -439,12 +438,19 @@
           </div>
 
           <div class="box">
-            <div class="title">Movement Rules</div>
+            <div class="title">Base Movement Rules</div>
             <div class="sub" style="margin-top:6px;">
               <span class="mono">Imperium</span>: +1 move<br/>
               <span class="mono">Xenos</span>: minimum roll is 2<br/>
               <span class="mono">Chaos</span>: +1 effective move if destination is closer to nearest enemy
             </div>
+          </div>
+
+          <div class="box">
+            <div class="title">Team Star Bonuses (STACKING)</div>
+            <div class="sub" id="teamBonusesText" style="margin-top:6px;">
+              —
+/// </div>
           </div>
 
           <div class="box">
@@ -459,6 +465,7 @@
       <div class="hintBar">
         Tactical matchup locks at <span class="mono">range 2 + LOS</span>.
         Strategic rumor appears at <span class="mono">range 4</span>.
+        Star sites stack: <span class="mono">3× VOX = 3 extra strategic rumors/round</span>.
       </div>
     </div>
 
@@ -467,7 +474,8 @@
       <div class="mapHeader">
         <div class="left">
           <div class="bigTitle">Campaign Map</div>
-          <div class="sub">Wheel zoom • Drag pan • Click token to select • Roll move then click highlighted hex</div>
+          <div class="sub">Wheel zoom • Drag pan • Click token to select • Roll move then click highlighted hex • Click ★ list to jump</div>
+
           <div class="focusCard" id="focusCard" style="display:none;">
             <div class="focusTop">
               <div class="focusTitle" id="focusTitle">★ STAR SITE</div>
@@ -514,7 +522,7 @@
 
       <div class="section">
         <div class="title">Star Sites Control</div>
-        <div class="sub">Click a star site to highlight it and read its bonus.</div>
+        <div class="sub">Consistent types + stacking bonuses. Click a site to highlight and read.</div>
         <div class="list" id="starList" style="margin-top:10px;"></div>
       </div>
     </div>
@@ -573,6 +581,7 @@ const HEX_SIZE = 34;
 const GRID_RADIUS = 7;
 const CENTER = { x: 600, y: 430 };
 
+/* Terrain palette */
 const BIOME_CHIP = {
   plains:   { dot:"rgba(255,255,255,0.55)", text:"rgba(255,255,255,0.80)" },
   forest:   { dot:"rgba(63,191,127,0.72)",  text:"rgba(63,191,127,0.94)"  },
@@ -593,52 +602,91 @@ const BIOMES = [
   { id:"badlands", label:"BADLAND", abbr:"BD" }
 ];
 
+// Special hexes: LOS block and Movement block
 const SPECIALS = [
   { id:"none",      label:"—",              blocks_los:false, blocks_movement:false, weight: 84 },
   { id:"blackout",  label:"Sensor Blackout",blocks_los:true,  blocks_movement:false, weight: 10 },
   { id:"exclusion", label:"Exclusion Zone", blocks_los:false, blocks_movement:true,  weight: 6  }
 ];
 
-const IMPORTANT_TYPES = [
-  { id:"spaceport",     label:"Spaceport",      weight: 18 },
-  { id:"manufactorum",  label:"Manufactorum",   weight: 18 },
-  { id:"relic_site",    label:"Relic Site",     weight: 18 },
-  { id:"vox_relay",     label:"Vox Relay",      weight: 22 },
-  { id:"shrine",        label:"Shrine",         weight: 18 },
-  { id:"promethium",    label:"Promethium Rig", weight: 12 },
-  { id:"data_vault",    label:"Data Vault",     weight: 12 }
+/* ===========================
+   STAR SITES (CONSISTENT + STACKING)
+=========================== */
+const STAR_TYPES = [
+  {
+    id:"vox_relay",
+    label:"Vox Relay",
+    tag:"VOX",
+    value:"Command & intel advantage",
+    hook:"Grants +1 Strategic Rumor per round (range 4)."
+  },
+  {
+    id:"shrine",
+    label:"Shrine",
+    tag:"SHR",
+    value:"Morale & martyrdom site",
+    hook:"Grants +1 'Pilgrimage Step' per round (free 1-hex move toward any controlled star site)."
+  },
+  {
+    id:"manufactorum",
+    label:"Manufactorum",
+    tag:"MFG",
+    value:"War material & repairs",
+    hook:"Grants +1 Movement Reroll per round (d3 reroll, must take the new result)."
+  },
+  {
+    id:"spaceport",
+    label:"Spaceport",
+    tag:"PORT",
+    value:"Rapid deployment corridor",
+    hook:"Grants +1 'Afterburn' per round (+1 move after rolling for a token)."
+  },
+  {
+    id:"relic_site",
+    label:"Relic Site",
+    tag:"RELIC",
+    value:"Archaeotech / sacred asset",
+    hook:"Grants +1 'Relic Override' per round (treat LOS as clear through 1 blackout hex for a single tactical check)."
+  },
+  {
+    id:"promethium",
+    label:"Promethium Rig",
+    tag:"FUEL",
+    value:"Fuel & combustion supply",
+    hook:"Grants +1 'Fuel Surge' per round (+1 movement for a token that ends on Plains/Badlands)."
+  },
+  {
+    id:"data_vault",
+    label:"Data Vault",
+    tag:"DATA",
+    value:"Targeting data / hidden records",
+    hook:"Grants +1 'Reveal' per round (publicly reveal a chosen enemy token’s hex on the board)."
+  }
 ];
 
-const IMPORTANT_VALUE = {
-  spaceport: [
-    { tag:"PORT", value:"Rapid deployment corridor", hook:"Once per round, one Imperium token may +1 move after rolling." },
-    { tag:"PORT", value:"Air-superiority staging", hook:"When you win a battle here, gain +1 Strategic Rumor influence next round." }
-  ],
-  manufactorum: [
-    { tag:"MFG", value:"War material & repairs", hook:"Once per round, reroll your d3 movement (take the new result)." },
-    { tag:"MFG", value:"Vehicle salvage lines", hook:"If you control this, your team gains +1 supply (campaign-level bonus)." }
-  ],
-  relic_site: [
-    { tag:"RELIC", value:"Archaeotech / sacred asset", hook:"Winner of a battle here may claim a one-time +1 CP (next game)." },
-    { tag:"RELIC", value:"Unknown weapon signature", hook:"Control grants a defensive edge: enemies treat you as in cover on this hex." }
-  ],
-  vox_relay: [
-    { tag:"VOX", value:"Command & intel advantage", hook:"Once per round, you may generate one extra Strategic Rumor." },
-    { tag:"VOX", value:"Signal dominance", hook:"Enemies within 4 hexes cannot hide: their Strategic Rumors always generate." }
-  ],
-  shrine: [
-    { tag:"SHR", value:"Morale & martyrdom site", hook:"First loss each round for controlling team does not reduce star control (narrative resilience)." },
-    { tag:"SHR", value:"Pilgrimage control point", hook:"Once per round, a friendly token may move 1 hex for free toward this site." }
-  ],
-  promethium: [
-    { tag:"FUEL", value:"Fuel & combustion supply", hook:"Once per round, add +1 to movement for one token after rolling." },
-    { tag:"FUEL", value:"Strategic resource node", hook:"If contested, both sides generate a Strategic Rumor immediately." }
-  ],
-  data_vault: [
-    { tag:"DATA", value:"Targeting data / hidden records", hook:"Once per round, pick a Tactical matchup and reveal its location to all." },
-    { tag:"DATA", value:"Secure archives", hook:"Control grants +1 LOS advantage: treat one blackout hex as transparent this round." }
-  ]
-};
+function starDefById(id){ return STAR_TYPES.find(t=>t.id===id); }
+
+// Balanced bag — more stars + even distribution
+function buildStarBag(){
+  const bag = [];
+  const pushN = (id, n) => { for(let i=0;i<n;i++) bag.push(id); };
+
+  // 17 total stars (dense enough to matter)
+  pushN("vox_relay", 3);
+  pushN("shrine", 3);
+  pushN("manufactorum", 3);
+  pushN("spaceport", 3);
+  pushN("relic_site", 2);
+  pushN("promethium", 2);
+  pushN("data_vault", 1);
+
+  // shuffle
+  for(let i=bag.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+  return bag;
+}
 
 /* ===========================
    STATE
@@ -654,12 +702,34 @@ let strategicRumors = [];
 let tacticalMatchups = [];
 let seenStrategicPairs = new Set();
 
+// Movement highlight
 let reachable = new Map();
+
+// Star control
 let starControl = new Map();
 
-/* NEW: focused highlight/info */
+// Focus highlight/info
 let focusedHexKey = null;
 let focusPulseUntil = 0;
+
+// Team bonus pool (STACKING)
+let teamBonuses = {
+  [TEAM.IMPERIUM]: initBonusCounters(),
+  [TEAM.XENOS]: initBonusCounters(),
+  [TEAM.CHAOS]: initBonusCounters()
+};
+
+function initBonusCounters(){
+  return {
+    vox: 0,
+    shrine: 0,
+    mfg: 0,
+    port: 0,
+    relic: 0,
+    fuel: 0,
+    data: 0
+  };
+}
 
 /* ===========================
    DOM + HELPERS
@@ -693,10 +763,6 @@ function weightedPick(items){
   return items[items.length-1];
 }
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-function safeClip(str){
-  return (str || "").replace(/[^\w\s\-\(\)\.\,\:\;\/]/g, "");
-}
 
 /* ===========================
    HEX MATH
@@ -752,20 +818,32 @@ function hexLine(aq,ar,bq,br){
   }
   return out;
 }
-function hasLOS(aq,ar,bq,br){
+function hasLOS(aq,ar,bq,br, opts={}){
+  // optional: allow one blackout to be ignored (Relic Override)
+  const allowOneBlackout = !!opts.allowOneBlackout;
+  let usedIgnore = false;
+
   const line = hexLine(aq,ar,bq,br);
   for(let i=1;i<line.length-1;i++){
     const k = keyOf(line[i].q, line[i].r);
-    if(hexes.get(k)?.special?.blocks_los) return false;
+    const sp = hexes.get(k)?.special;
+    if(sp?.blocks_los){
+      if(allowOneBlackout && !usedIgnore){
+        usedIgnore = true;
+        continue;
+      }
+      return false;
+    }
   }
   return true;
 }
 
 /* ===========================
-   TERRAIN + ★ DATA
+   TERRAIN + ★ GENERATION
 =========================== */
 function generateHexes(){
   hexes = new Map();
+
   for(let q=-GRID_RADIUS; q<=GRID_RADIUS; q++){
     for(let r=-GRID_RADIUS; r<=GRID_RADIUS; r++){
       if(axialDistance(0,0,q,r) > GRID_RADIUS) continue;
@@ -775,24 +853,53 @@ function generateHexes(){
     }
   }
 
+  // place stars using a balanced bag + spacing
   const keys = [...hexes.keys()];
-  const count = randInt(10,12);
-  for(let i=0;i<count;i++){
+  const bag = buildStarBag();
+  const chosen = [];
+  const minSpacing = 2;
+
+  function isFarEnough(k){
+    const a = parseKey(k);
+    for(const ck of chosen){
+      const b = parseKey(ck);
+      if(axialDistance(a.q,a.r,b.q,b.r) < minSpacing) return false;
+    }
+    return true;
+  }
+
+  let attempts = 0;
+  while(chosen.length < bag.length && attempts < 6000){
+    attempts++;
     const k = keys[randInt(0, keys.length-1)];
     const h = hexes.get(k);
-    if(!h || h.special.blocks_movement) { i--; continue; }
-    if(h.important) { i--; continue; }
+    if(!h) continue;
+    if(h.special?.blocks_movement) continue;
+    if(h.important) continue;
+    if(!isFarEnough(k)) continue;
+    chosen.push(k);
+    h.important = { pending:true };
+  }
 
-    const it = weightedPick(IMPORTANT_TYPES);
-    const v = pick(IMPORTANT_VALUE[it.id] || [{ tag:"SITE", value:"Strategic leverage", hook:"A site worth bleeding for." }]);
+  // Fill remainder if spacing prevented enough
+  for(const k of keys){
+    if(chosen.length >= bag.length) break;
+    const h = hexes.get(k);
+    if(!h || h.special?.blocks_movement || h.important) continue;
+    chosen.push(k);
+    h.important = { pending:true };
+  }
 
+  for(let i=0;i<chosen.length && i<bag.length;i++){
+    const k = chosen[i];
+    const h = hexes.get(k);
+    const def = starDefById(bag[i]);
     h.important = {
-      type: it.id,
-      label: it.label,
-      tag: v.tag,
-      value: v.value,
-      hook: v.hook,
-      importance: randInt(2,5)
+      type: def.id,
+      label: def.label,
+      tag: def.tag,
+      value: def.value,
+      hook: def.hook
     };
   }
 
@@ -800,7 +907,7 @@ function generateHexes(){
 }
 
 /* ===========================
-   TOKENS
+   TOKENS + SPAWNS
 =========================== */
 function teamColor(team){
   if(team===TEAM.IMPERIUM) return { stroke:"rgba(74,166,255,0.62)", fill:"rgba(74,166,255,0.22)", chip:"blue" };
@@ -820,7 +927,7 @@ function placeTokens(){
     moveFrom: null
   }));
 
-  // Three evenly spaced corners: (R,0), (-R,R), (0,-R)
+  // Three separated corners: (R,0), (-R,R), (0,-R)
   const starts = {
     [TEAM.IMPERIUM]: [
       { q: -GRID_RADIUS,     r:  GRID_RADIUS },
@@ -850,12 +957,12 @@ function placeTokens(){
     arr.forEach((tok, i) => {
       const s = spots[i] || {q:0,r:0};
       let q=s.q, r=s.r;
-      for(let tries=0; tries<10; tries++){
+      for(let tries=0; tries<12; tries++){
         const h = hexes.get(keyOf(q,r));
         if(h && !h.special.blocks_movement) break;
-        if(team===TEAM.IMPERIUM){ q++; r--; }
-        if(team===TEAM.XENOS){ q--; }
-        if(team===TEAM.CHAOS){ r++; }
+        // nudge
+        q += randInt(-1,1);
+        r += randInt(-1,1);
       }
       tok.q=q; tok.r=r;
     });
@@ -867,9 +974,54 @@ function placeTokens(){
 }
 
 /* ===========================
+   STAR CONTROL + STACKING COUNTS
+=========================== */
+function computeStarControl(){
+  starControl = new Map();
+
+  for(const [k,h] of hexes.entries()){
+    if(!h.important) continue;
+
+    const occupants = tokens.filter(t => keyOf(t.q,t.r) === k);
+    const teamsHere = [...new Set(occupants.map(o => o.team))];
+
+    let owner = null;
+    if(teamsHere.length === 1) owner = teamsHere[0];
+    else if(teamsHere.length > 1) owner = "Contested";
+
+    starControl.set(k, { owner, occupants });
+  }
+}
+
+function computeTeamBonuses(){
+  teamBonuses = {
+    [TEAM.IMPERIUM]: initBonusCounters(),
+    [TEAM.XENOS]: initBonusCounters(),
+    [TEAM.CHAOS]: initBonusCounters()
+  };
+
+  for(const [k,h] of hexes.entries()){
+    if(!h.important) continue;
+    const owner = starControl.get(k)?.owner;
+    if(!owner || owner === "Contested") continue;
+
+    // STACKING: each site adds one count
+    switch(h.important.type){
+      case "vox_relay": teamBonuses[owner].vox++; break;
+      case "shrine": teamBonuses[owner].shrine++; break;
+      case "manufactorum": teamBonuses[owner].mfg++; break;
+      case "spaceport": teamBonuses[owner].port++; break;
+      case "relic_site": teamBonuses[owner].relic++; break;
+      case "promethium": teamBonuses[owner].fuel++; break;
+      case "data_vault": teamBonuses[owner].data++; break;
+    }
+  }
+}
+
+/* ===========================
    MOVEMENT
 =========================== */
-function d3(){ return randInt(1,3); }
+function d3(){ return Math.floor(Math.random()*3)+1; }
 function getSelectedToken(){ return tokens.find(t=>t.id===selectedTokenId) || null; }
 
 function nearestEnemyDistance(tokenId, q, r){
@@ -883,24 +1035,6 @@ function nearestEnemyDistance(tokenId, q, r){
     best = Math.min(best, axialDistance(q,r, other.q, other.r));
   }
   return best;
-}
-
-function rollMoveFor(token){
-  if(!token) return;
-  if(token.status !== "available"){ toast("This token is engaged (already matched)."); return; }
-
-  const roll = d3();
-  let move = roll;
-
-  if(token.team === TEAM.IMPERIUM) move = roll + 1;
-  else if(token.team === TEAM.XENOS) move = Math.max(2, roll);
-
-  token.movePoints = move;
-  token.moveFrom = keyOf(token.q, token.r);
-  plannedDestKey = null;
-
-  computeReachableForSelected();
-  toast(`Move rolled for ${token.faction}: d3=${roll} → Move=${move}`);
 }
 
 function bfsReachable(startKey, maxDist){
@@ -946,6 +1080,30 @@ function chaosEffectiveBonusActive(token, destKey){
   return Number.isFinite(nearestStart) && Number.isFinite(nearestDest) && nearestDest < nearestStart;
 }
 
+// Apply base team movement rules + (optionally) one PORT afterburn later via GM/house rule.
+// We track available afterburn uses from PORT for the team (STACKING).
+function rollMoveFor(token){
+  if(!token) return;
+  if(token.status !== "available"){ toast("This token is engaged (already matched)."); return; }
+
+  computeStarControl();
+  computeTeamBonuses();
+
+  const roll = d3();
+  let move = roll;
+
+  if(token.team === TEAM.IMPERIUM) move = roll + 1;
+  else if(token.team === TEAM.XENOS) move = Math.max(2, roll);
+
+  token.movePoints = move;
+  token.moveFrom = keyOf(token.q, token.r);
+  plannedDestKey = null;
+
+  computeReachableForSelected();
+
+  toast(`Move rolled for ${token.faction}: d3=${roll} → Move=${move}`);
+}
+
 function computeReachableForSelected(){
   const tok = getSelectedToken();
   reachable = new Map();
@@ -957,6 +1115,7 @@ function computeReachableForSelected(){
   const base = bfsReachable(startKey, tok.movePoints);
   for(const [k,d] of base.entries()) reachable.set(k,d);
 
+  // Chaos potential +1 reach (conditional)
   if(tok.team === TEAM.CHAOS){
     const bonus = bfsReachable(startKey, tok.movePoints + 1);
     for(const [k,d] of bonus.entries()){
@@ -966,26 +1125,7 @@ function computeReachableForSelected(){
 }
 
 /* ===========================
-   STAR CONTROL
-=========================== */
-function computeStarControl(){
-  starControl = new Map();
-  for(const [k,h] of hexes.entries()){
-    if(!h.important) continue;
-
-    const occupants = tokens.filter(t => keyOf(t.q,t.r) === k);
-    const teamsHere = [...new Set(occupants.map(o => o.team))];
-
-    let owner = null;
-    if(teamsHere.length === 1) owner = teamsHere[0];
-    else if(teamsHere.length > 1) owner = "Contested";
-
-    starControl.set(k, { owner, occupants });
-  }
-}
-
-/* ===========================
-   RUMORS
+   RUMOR TEMPLATES
 =========================== */
 const STRATEGIC_TEMPLATES = [
   "Long-range augurs register hostile movement near {place}. Indicators suggest {theme}.",
@@ -1012,6 +1152,7 @@ const THEMES_BY_BIOME = {
 function normalizePair(aId,bId){ return [aId,bId].sort().join("|"); }
 
 function bestContextPlace(a, b){
+  // prefer star sites near either participant
   let best=null, bestScore=-1;
 
   for(const [k,h] of hexes.entries()){
@@ -1021,25 +1162,23 @@ function bestContextPlace(a, b){
     if(Math.min(da,db) > 2) continue;
 
     let score = 0;
-    if(h.important) score += h.important.importance * 10;
+    if(h.important) score += 25; // bias star sites
     if(h.special?.blocks_los) score += 6;
     score += (2 - Math.min(da,db)) * 2;
+
     if(score > bestScore){ bestScore=score; best={k,h}; }
   }
 
-  if(best){
-    const h = best.h;
-    const parts = [];
-    if(h.important) parts.push(`★ ${h.important.label} (${h.important.tag})`);
-    parts.push(h.biome.label);
-    if(h.special?.id === "blackout") parts.push("JAMMED");
-    if(h.special?.id === "exclusion") parts.push("EXCLUSION");
-    return { place: parts.join(" — "), biomeId: h.biome.id, key: best.k, site: h.important || null };
-  }
+  const chosen = best ? best : { k: keyOf(a.q,a.r), h: hexes.get(keyOf(a.q,a.r)) };
 
-  const mk = keyOf(a.q,a.r);
-  const mh = hexes.get(mk);
-  return { place: mh ? mh.biome.label : "Unknown Sector", biomeId: mh ? mh.biome.id : "plains", key: mk, site: mh?.important || null };
+  const h = chosen.h;
+  const parts = [];
+  if(h?.important) parts.push(`★ ${h.important.label} (${h.important.tag})`);
+  parts.push(h?.biome?.label || "Unknown Sector");
+  if(h?.special?.id === "blackout") parts.push("JAMMED");
+  if(h?.special?.id === "exclusion") parts.push("EXCLUSION");
+
+  return { place: parts.join(" — "), biomeId: h?.biome?.id || "plains", key: chosen.k, site: h?.important || null };
 }
 
 function generateStrategicRumor(a, b){
@@ -1058,9 +1197,20 @@ function generateTacticalRumor(a, b){
   return { text: base + extra, locationKey: ctx.key };
 }
 
+/* ===========================
+   RUMOR CHECKS (RANGE 4 + RANGE 2+LOS)
+   - Tactical locks and removes both tokens from pool
+   - Strategic: one per pair per round, range 4
+   - IMPORTANT: we also grant extra strategic rumor allowances from VOX (STACKING)
+     We handle this by allowing multiple strategic rumors per round overall; the generation
+     still triggers on movement events, but VOX allows you to "force" extra strategic rumors
+     from GM console in the future if you want. For now: VOX is shown and exported; strategic
+     generation remains event-driven (so players see it as a consequence of movement).
+=========================== */
 function checkRumorsAfterMove(movedToken){
   if(!movedToken || movedToken.status !== "available") return;
 
+  // Tactical: range 2 + LOS
   const candidatesTac = [];
   for(const other of tokens){
     if(other.id === movedToken.id) continue;
@@ -1068,7 +1218,12 @@ function checkRumorsAfterMove(movedToken){
     if(other.team === movedToken.team) continue;
 
     const d = axialDistance(movedToken.q, movedToken.r, other.q, other.r);
-    if(d <= 2 && hasLOS(movedToken.q, movedToken.r, other.q, other.r)) candidatesTac.push({ other, d });
+    if(d <= 2){
+      const allowOneBlackout = false; // relic override could be used in future (spent resource)
+      if(hasLOS(movedToken.q, movedToken.r, other.q, other.r, { allowOneBlackout })) {
+        candidatesTac.push({ other, d });
+      }
+    }
   }
   candidatesTac.sort((a,b)=>a.d-b.d);
 
@@ -1092,6 +1247,7 @@ function checkRumorsAfterMove(movedToken){
     return;
   }
 
+  // Strategic: range 4
   const candidatesStrat = [];
   for(const other of tokens){
     if(other.id === movedToken.id) continue;
@@ -1136,7 +1292,6 @@ function focusHex(hexKey, opts={}){
 
   focusOnHex(hexKey);
 
-  // show info card for star site (or if forced openInfo)
   const openInfo = !!opts.openInfo;
 
   if(h.important || openInfo){
@@ -1149,12 +1304,15 @@ function focusHex(hexKey, opts={}){
 
       $("focusTitle").textContent = `★ ${h.important.label} — ${h.important.tag}`;
       $("focusChip").textContent = ownerText;
-      $("focusChip").className = (ctl==="Contested") ? "chip gold" :
+
+      $("focusChip").className =
+        (ctl==="Contested") ? "chip gold" :
         (ctl===TEAM.IMPERIUM) ? "chip blue" :
         (ctl===TEAM.XENOS) ? "chip green" :
         (ctl===TEAM.CHAOS) ? "chip red" : "chip";
 
       $("focusBody").textContent = `${h.important.value}. ${h.important.hook}`;
+
       const extra = [];
       extra.push(`Hex ${hexKey}`);
       extra.push(`${h.biome.label}`);
@@ -1225,6 +1383,7 @@ function drawReachableOverlay(){
 
 function drawHexes(){
   computeStarControl();
+  computeTeamBonuses();
 
   for(const [k,h] of hexes.entries()){
     const pts = hexCorners(h.q,h.r).map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
@@ -1304,7 +1463,7 @@ function drawHexes(){
       svg.appendChild(t);
     }
 
-    // ★ + control ring
+    // ★ + tag + control ring
     if(h.important){
       const star = document.createElementNS(svgNS, "text");
       star.setAttribute("x", c.x);
@@ -1417,7 +1576,7 @@ function drawSelection(){
     }
   }
 
-  // NEW: focused hex ring + pulse
+  // focused hex ring + pulse
   if(focusedHexKey){
     const h = hexes.get(focusedHexKey);
     if(h){
@@ -1434,15 +1593,19 @@ function drawSelection(){
 
       const now = Date.now();
       if(now < focusPulseUntil){
+        const t = (focusPulseUntil - now) / 2400; // 1..0
+        const r = 6 + (1-t)*16;
+
         const pulse = document.createElementNS(svgNS, "circle");
         pulse.setAttribute("cx", c.x);
         pulse.setAttribute("cy", c.y);
-        pulse.setAttribute("r", "6");
-        pulse.setAttribute("fill", "rgba(209,161,75,0.55)");
+        pulse.setAttribute("r", String(r));
+        pulse.setAttribute("fill", "rgba(209,161,75,0.12)");
+        pulse.setAttribute("stroke", "rgba(209,161,75,0.55)");
+        pulse.setAttribute("stroke-width", "2");
         pulse.setAttribute("pointer-events", "none");
         svg.appendChild(pulse);
 
-        // crude pulse animation via RAF: redraw
         requestAnimationFrame(() => renderAll());
       }
     }
@@ -1474,6 +1637,9 @@ function renderTokenSelect(){
 }
 
 function renderPlayerHUD(){
+  computeStarControl();
+  computeTeamBonuses();
+
   const tok = getSelectedToken();
   if(!tok){
     $("tokenStatus").textContent = "—";
@@ -1506,6 +1672,17 @@ function renderPlayerHUD(){
 
   $("btnRollMove").disabled = engaged;
   $("btnClearMove").disabled = false;
+
+  // Show stacking bonuses for selected token’s team
+  const b = teamBonuses[tok.team];
+  $("teamBonusesText").textContent =
+    `VOX: +${b.vox} strategic rumors/round
+SHR: +${b.shrine} pilgrimage steps/round
+MFG: +${b.mfg} movement rerolls/round
+PORT: +${b.port} afterburns/round
+RELIC: +${b.relic} relic overrides/round
+FUEL: +${b.fuel} fuel surges/round
+DATA: +${b.data} reveals/round`;
 }
 
 /* ===========================
@@ -1558,7 +1735,7 @@ function renderRumors(){
     return;
   }
 
-  for(const r of strategicRumors.slice(-6).reverse()){
+  for(const r of strategicRumors.slice(-8).reverse()){
     const a = tokens.find(t=>t.id===r.aId);
     const b = tokens.find(t=>t.id===r.bId);
     const loc = hexes.get(r.locationKey);
@@ -1583,13 +1760,20 @@ function renderRumors(){
 
 function renderStars(){
   computeStarControl();
+  computeTeamBonuses();
+
   const el = $("starList");
   el.innerHTML = "";
 
   const stars = [...hexes.entries()]
     .filter(([k,h]) => h.important)
     .map(([k,h]) => ({ key:k, hex:h, ctl: starControl.get(k) }))
-    .sort((a,b) => (b.hex.important.importance||0) - (a.hex.important.importance||0));
+    .sort((a,b) => {
+      const oa = a.hex.important.tag, ob = b.hex.important.tag;
+      if(oa < ob) return -1;
+      if(oa > ob) return 1;
+      return a.key.localeCompare(b.key);
+    });
 
   if(!stars.length){
     const empty = document.createElement("div");
@@ -1659,9 +1843,9 @@ function onHexClicked(hexKey){
     return;
   }
 
+  const h = hexes.get(hexKey);
+
   if(tok.movePoints == null || !tok.moveFrom){
-    // If they click an important hex, focus info anyway
-    const h = hexes.get(hexKey);
     if(h?.important) focusHex(hexKey, { openInfo:true });
     else toast("Roll movement first, then click a highlighted hex.");
     renderAll();
@@ -1669,8 +1853,6 @@ function onHexClicked(hexKey){
   }
 
   if(!reachable.has(hexKey)){
-    // If it’s a star site, let click be “inspect”
-    const h = hexes.get(hexKey);
     if(h?.important) focusHex(hexKey, { openInfo:true });
     else toast("Not reachable (must be highlighted).");
     renderAll();
@@ -1695,8 +1877,7 @@ function onHexClicked(hexKey){
   reachable = new Map();
   plannedDestKey = null;
 
-  // If they moved onto a star, auto-focus it
-  const h = hexes.get(hexKey);
+  // Auto-focus stars
   if(h?.important) focusHex(hexKey, { openInfo:true });
 
   checkRumorsAfterMove(tok);
@@ -1759,6 +1940,7 @@ $("btnNewRound").addEventListener("click", () => {
 $("btnRegenTerrain").addEventListener("click", () => {
   generateHexes();
 
+  // nudge tokens off blocked movement tiles if needed
   for(const tok of tokens){
     const h = hexes.get(keyOf(tok.q,tok.r));
     if(h?.special?.blocks_movement){
@@ -1795,14 +1977,21 @@ $("btnResetMap").addEventListener("click", () => {
 
 $("btnExport").addEventListener("click", async () => {
   computeStarControl();
+  computeTeamBonuses();
+
   const exportObj = {
     round,
     map: { gridRadius: GRID_RADIUS },
     tokens: tokens.map(t=>({ id:t.id, team:t.team, faction:t.faction, short:t.short, q:t.q, r:t.r, status:t.status })),
+    starSites: [...hexes.entries()]
+      .filter(([k,h]) => h.important)
+      .map(([k,h]) => ({ key:k, type:h.important.type, tag:h.important.tag, label:h.important.label, value:h.important.value, hook:h.important.hook })),
     starControl: [...starControl.entries()].map(([k,v]) => ({ key:k, owner:v.owner, occupants:(v.occupants||[]).map(o=>o.short) })),
+    teamBonuses, // STACKING counts
     strategicRumors,
     tacticalMatchups
   };
+
   const text = JSON.stringify(exportObj, null, 2);
   try{
     await navigator.clipboard.writeText(text);
@@ -1886,9 +2075,12 @@ function focusOnHex(hexKey){
 }
 
 /* ===========================
-   INIT
+   INIT + RENDER
 =========================== */
 function renderAll(){
+  computeStarControl();
+  computeTeamBonuses();
+
   renderRoundChip();
   renderTokenSelect();
   renderPlayerHUD();
@@ -1904,7 +2096,7 @@ function init(){
   resetView();
   computeReachableForSelected();
   renderAll();
-  toast("Click a ★ site on the right to jump to it and see its bonus.");
+  toast("Star Sites are consistent + stacking. Click ★ list to jump & read bonuses.");
 }
 init();
 </script>
